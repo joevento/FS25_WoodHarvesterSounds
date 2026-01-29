@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" standalone="no" ?>
+<modDesc descVersion="32">
+	<author>kenny456</author>
+	<version>1.0</version>
+	<title>
+		<en>Wood Logs Sound</en>
+	</title>
+	<description>
+		<en><![CDATA[This mod plays sounds when you are logging with any vehicles or tools in the game.]]></en>
+	</description>
+	<iconFilename>store.dds</iconFilename>
+	<multiplayer supported="true"/>
+	<extraSourceFiles>
+		<sourceFile filename="Register.lua" />
+		<sourceFile filename="playerTrigger.lua" />
+	</extraSourceFiles>
+</modDesc>
