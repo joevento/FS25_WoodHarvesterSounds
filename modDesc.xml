@@ -1,17 +1,16 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
-<modDesc descVersion="32">
-	<author>kenny456</author>
-	<version>1.0</version>
+<modDesc descVersion="105">
+	<author>DicoFlower8890</author>
+	<version>0.1.0.0</version>
 	<title>
-		<en>Wood Logs Sound</en>
+		<en>Wood Harvester Sounds</en>
 	</title>
 	<description>
-		<en><![CDATA[This mod plays sounds when you are logging with any vehicles or tools in the game.]]></en>
+		<en><![CDATA[This mod plays sounds when you are logging with any vehicles.]]></en>
 	</description>
-	<iconFilename>store.dds</iconFilename>
+	<iconFilename>icon.dds</iconFilename>
 	<multiplayer supported="true"/>
 	<extraSourceFiles>
 		<sourceFile filename="Register.lua" />
-		<sourceFile filename="playerTrigger.lua" />
 	</extraSourceFiles>
 </modDesc>

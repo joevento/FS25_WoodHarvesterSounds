@@ -1,0 +1,28 @@
+<sounds>
+    <woodSounds>
+        <logCollision>
+            <sample>
+                <file fileName="Sounds/logs01.wav" />
+            </sample>
+            <sample>
+                <file fileName="Sounds/logs02.wav" />
+            </sample>
+        </logCollision>
+        <groundCollision>
+            <sample>
+                <file fileName="Sounds/ground01.wav" />
+            </sample>
+            <sample>
+                <file fileName="Sounds/ground02.wav" />
+            </sample>
+            <sample>
+                <file fileName="Sounds/ground03.wav" />
+            </sample>
+        </groundCollision>
+        <treeFall>
+            <sample>
+                <file fileName="Sounds/fall01.wav" />
+            </sample>
+        </treeFall>
+    </woodSounds>
+</sounds>
