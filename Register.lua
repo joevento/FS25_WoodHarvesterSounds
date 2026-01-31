@@ -15,7 +15,7 @@ local function initSpecialization(manager)
 
         for typeName, typeEntry in pairs(g_vehicleTypeManager:getTypes()) do
             if SpecializationUtil.hasSpecialization(WoodHarvester, typeEntry.specializations) then
-                g_vehicleTypeManager:addSpecialization(typeName, modName .. "."..specName)
+                g_vehicleTypeManager:addSpecialization(typeName, modName .. "." .. specName)
             end
         end
     end

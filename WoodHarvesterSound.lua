@@ -6,6 +6,21 @@ function WoodHarvesterSound.registerEventListeners(vehicleType)
 	SpecializationUtil.registerEventListener(vehicleType, "onLoad", WoodHarvesterSound)
 	SpecializationUtil.registerEventListener(vehicleType, "onUpdate", WoodHarvesterSound)
 	SpecializationUtil.registerEventListener(vehicleType, "onDraw", WoodHarvesterSound)
+	SpecializationUtil.registerEventListener(vehicleType, "onPostCut", WoodHarvesterSound)
+end
+
+function WoodHarvesterSound:onPostCut(shape, length, diameter, isBelowMinimum)
+	local spec = self.spec_woodHarvester
+	if spec.lastSplitShapes ~= nil then
+		local wasFelled = getUserAttribute(shape, "whs_hasFelled")
+		if wasFelled then
+			for _, newShape in pairs(spec.lastSplitShapes) do
+				if entityExists(newShape) then
+					setUserAttribute(newShape, "whs_hasFelled", true)
+				end
+			end
+		end
+	end
 end
 
 function WoodHarvesterSound:onLoad(savegame)
@@ -63,9 +78,6 @@ end
 
 function WoodHarvesterSound:onUpdate(dt)
 	if self:getIsActive() then
-		if self.whs.felledTrees == nil then
-			self.whs.felledTrees = {}
-		end
 		if self.whs.lastAngVel == nil then
 			self.whs.lastAngVel = {}
 		end
@@ -107,6 +119,7 @@ function WoodHarvesterSound:onUpdate(dt)
 					if velocity > 0.1 then
 						local comX, comY, comZ = getCenterOfMass(v)
 						local wcomX, wcomY, wcomZ = localToWorld(v, comX, comY, comZ)
+						local x, y, z = getWorldTranslation(v)
 						local terrainY = getTerrainHeightAtWorldPos(g_currentMission.terrainRootNode, wcomX, wcomY, wcomZ)
 						local comDistToGround = wcomY - terrainY
 
@@ -117,7 +130,7 @@ function WoodHarvesterSound:onUpdate(dt)
 						self.whs.lastAngVel[v] = angVelocity
 
 						-- Ground Impact
-						if not isAttached and comDistToGround < 0.5 and velocity > 0.125 then
+						if not isAttached and ((comDistToGround < 0.5 and velocity > 0.125) or (comDistToGround < 0.75 and angVelocity > 0.5)) then
 							if WoodHarvesterSound.checkIsInRange(self, v) then
 								if not self.whs.isGroundPlaying then
 									WoodHarvesterSound.playSound(self, g_currentMission.whs.samplesGround, v, "Ground")
@@ -126,20 +139,13 @@ function WoodHarvesterSound:onUpdate(dt)
 						end
 
 						-- Tree Falling
-						if comDistToGround > 5.0 and angVelocity > 0.25 then
-							if WoodHarvesterSound.checkIsInRange(self, v) and self.whs.felledTrees[v] == nil then
-								if not self.whs.isFallPlaying then
-									WoodHarvesterSound.playSound(self, g_currentMission.whs.samplesFall, v, "Fall")
-									self.whs.felledTrees[v] = true
-								end
-							end
-						end
-
-						-- Hitting ground at the end of the fall
-						if isAttached and comDistToGround < 2.5 and lastAV > 0.75 and angVelocity < 0.25 then
-							if WoodHarvesterSound.checkIsInRange(self, v) and self.whs.felledTrees[v] == true then
-								if not self.whs.isGroundPlaying then
-									WoodHarvesterSound.playSound(self, g_currentMission.whs.samplesGround, v, "Ground")
+						if timeToGround({ wcomX, wcomY, wcomZ }, { x, y, z }, { rotX, rotY, rotZ }, terrainY) < 0.75 then
+							if WoodHarvesterSound.checkIsInRange(self, v) then
+								if getUserAttribute(v, "whs_hasFelled") ~= true then
+									if not self.whs.isFallPlaying then
+										WoodHarvesterSound.playSound(self, g_currentMission.whs.samplesFall, v, "Fall")
+										setUserAttribute(v, "whs_hasFelled", "Boolean", true)
+									end
 								end
 							end
 						end
@@ -149,6 +155,9 @@ function WoodHarvesterSound:onUpdate(dt)
 							local isAttached = (self.spec_woodHarvester.attachedSplitShape == v)
 							local isOtherAttached = (spec ~= nil and self.spec_woodHarvester.attachedSplitShape == vv)
 
+							print(not isAttached)
+							print(not isOtherAttached)
+							print(v ~= vv and not isAttached and not isOtherAttached)
 							if v ~= vv and not isAttached and not isOtherAttached and entityExists(vv) and self.spec_woodHarvester.attachedSplitShape ~= nil then
 								local x1, y1, z1 = getWorldTranslation(v)
 								local x2, y2, z2 = getWorldTranslation(vv)
@@ -157,11 +166,14 @@ function WoodHarvesterSound:onUpdate(dt)
 								local relVel = MathUtil.vector3Length(vx - vx2, vy - vy2, vz - vz2)
 
 								if relVel > 0.4 then
+									print("----")
+									print("kinda fast")
 									local cX1, cY1, cZ1 = localToWorld(v, getCenterOfMass(v))
 									local cX2, cY2, cZ2 = localToWorld(vv, getCenterOfMass(vv))
 									local centerDist = MathUtil.vector3Length(cX1 - cX2, cY1 - cY2, cZ1 - cZ2)
 
 									if centerDist < (self.spec_woodHarvester.cutLengthMax * 2) then
+										print("sorta close")
 										local p1_mid = { localToWorld(v, 0, 5, 0) }
 										local p1_end = { localToWorld(v, 0, 10, 0) }
 										local p2_mid = { localToWorld(vv, 0, 5, 0) }
@@ -178,6 +190,7 @@ function WoodHarvesterSound:onUpdate(dt)
 										local minClosestDist = math.min(d1, d2, d3, d4, d5)
 
 										if minClosestDist < 1.75 then
+											print("they hit")
 											if WoodHarvesterSound.checkIsInRange(self, v) then
 												if not self.whs.isLogsPlaying then
 													WoodHarvesterSound.playSound(self, g_currentMission.whs.samplesLogs,
@@ -192,11 +205,26 @@ function WoodHarvesterSound:onUpdate(dt)
 					end
 				else
 					self.whs.logs[logId] = nil
-					self.whs.felledTrees[logId] = nil
 				end
 			end
 		end
 	end
+end
+
+function timeToGround(com, pivot, angularVel, terrainHeight)
+	local rx = com[1] - pivot[1]
+	local ry = com[2] - pivot[2]
+	local rz = com[3] - pivot[3]
+
+	local vy = (angularVel[3] * rx) - (angularVel[1] * rz)
+
+	local dy = com[2] - terrainHeight
+
+	if vy >= 0 then
+		return 999
+	end
+
+	return dy / -vy
 end
 
 function WoodHarvesterSound:collisionTestCallback(otherId, ...)
