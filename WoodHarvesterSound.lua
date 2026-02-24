@@ -155,47 +155,26 @@ function WoodHarvesterSound:onUpdate(dt)
 							local isAttached = (self.spec_woodHarvester.attachedSplitShape == v)
 							local isOtherAttached = (spec ~= nil and self.spec_woodHarvester.attachedSplitShape == vv)
 
-							print(not isAttached)
-							print(not isOtherAttached)
-							print(v ~= vv and not isAttached and not isOtherAttached)
 							if v ~= vv and not isAttached and not isOtherAttached and entityExists(vv) and self.spec_woodHarvester.attachedSplitShape ~= nil then
-								local x1, y1, z1 = getWorldTranslation(v)
-								local x2, y2, z2 = getWorldTranslation(vv)
-
 								local vx2, vy2, vz2 = getLinearVelocity(vv)
 								local relVel = MathUtil.vector3Length(vx - vx2, vy - vy2, vz - vz2)
 
 								if relVel > 0.4 then
-									print("----")
-									print("kinda fast")
-									local cX1, cY1, cZ1 = localToWorld(v, getCenterOfMass(v))
-									local cX2, cY2, cZ2 = localToWorld(vv, getCenterOfMass(vv))
-									local centerDist = MathUtil.vector3Length(cX1 - cX2, cY1 - cY2, cZ1 - cZ2)
+									local x, y, z = getWorldTranslation(v)
+									local rx, ry, rz = getWorldRotation(v)
 
-									if centerDist < (self.spec_woodHarvester.cutLengthMax * 2) then
-										print("sorta close")
-										local p1_mid = { localToWorld(v, 0, 5, 0) }
-										local p1_end = { localToWorld(v, 0, 10, 0) }
-										local p2_mid = { localToWorld(vv, 0, 5, 0) }
-										local p2_end = { localToWorld(vv, 0, 10, 0) }
+									local sizeX, sizeY, sizeZ = getSplitShapeStats(v)
 
-										local d1 = MathUtil.vector3Length(x1 - x2, y1 - y2, z1 - z2)
-										local d2 = MathUtil.vector3Length(p1_mid[1] - p2_mid[1], p1_mid[2] - p2_mid[2],
-											p1_mid[3] - p2_mid[3])
-										local d3 = MathUtil.vector3Length(p1_end[1] - p2_end[1], p1_end[2] - p2_end[2],
-											p1_end[3] - p2_end[3])
-										local d4 = MathUtil.vector3Length(x1 - p2_end[1], y1 - p2_end[2], z1 - p2_end[3])
-										local d5 = MathUtil.vector3Length(p1_end[1] - x2, p1_end[2] - y2, p1_end[3] - z2)
+									self.whs.overlapTarget = vv
+									self.whs.overlapHit = false
 
-										local minClosestDist = math.min(d1, d2, d3, d4, d5)
+									overlapBox(x, y, z, rx, ry, rz, sizeX / 2, sizeY / 2, sizeZ / 2, "whs_overlapCallback", self, CollisionFlag.TREE, true, true, true)
 
-										if minClosestDist < 1.75 then
-											print("they hit")
+									if self.whs.overlapHit then
 											if WoodHarvesterSound.checkIsInRange(self, v) then
 												if not self.whs.isLogsPlaying then
 													WoodHarvesterSound.playSound(self, g_currentMission.whs.samplesLogs,
 														v, "Logs")
-												end
 											end
 										end
 									end
@@ -298,4 +277,11 @@ function WoodHarvesterSound:onDraw()
 			end
 		end
 	end
+end
+
+function whs_overlapCallback(shapeId, x, y, z, distance)
+	if shapeId == g_currentMission.whs.overlapTarget then
+		g_currentMission.whs.overlapHit = true
+	end
+	return true
 end
