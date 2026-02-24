@@ -7,3 +7,5 @@ deploy.bat
 .luarc.json
 icon.xcf
 library/
+Sounds/dual
+Sounds/mono
