@@ -192,19 +192,23 @@ function WoodHarvesterSound:onUpdate(dt)
 								local relVel = MathUtil.vector3Length(vx - vx2, vy - vy2, vz - vz2)
 
 								if relVel > 0.4 then
-									local x, y, z = getWorldTranslation(v)
-									local rx, ry, rz = getWorldRotation(v)
+									local sizeX, sizeY, _ = getSplitShapeStats(v)
+									local sizeX2, sizeY2, _ = getSplitShapeStats(vv)
 
-									local sizeX, sizeY, sizeZ = getSplitShapeStats(v)
+									local halfLen1 = sizeX / 2
+									local halfLen2 = sizeX2 / 2
+									local combinedRadius = (sizeY + sizeY2) / 2
 
-									self.whs.overlapTarget = vv
-									self.whs.overlapHit = false
+									local v_start  = { localToWorld(v,  0, -halfLen1, 0) }
+									local v_end    = { localToWorld(v,  0,  halfLen1, 0) }
+									local vv_start = { localToWorld(vv, 0, -halfLen2, 0) }
+									local vv_end   = { localToWorld(vv, 0,  halfLen2, 0) }
 
-									overlapBox(x, y, z, rx, ry, rz, sizeX / 2, sizeY / 2, sizeZ / 2, "whs_overlapCallback", self, CollisionFlag.TREE, true, true, true)
+									local dist = closestDistBetweenSegments(v_start, v_end, vv_start, vv_end)
 
-									if self.whs.overlapHit then
-											if WoodHarvesterSound.checkIsInRange(self, v) then
-												if not self.whs.isLogsPlaying then
+									if dist < combinedRadius then
+										if WoodHarvesterSound.checkIsInRange(self, v) then
+											if not self.whs.isLogsPlaying then
 												WoodHarvesterSound.playSound(self, self.whs.samplesLogs, x, y, z)
 											end
 										end
@@ -239,7 +243,7 @@ end
 
 function WoodHarvesterSound:collisionTestCallback(otherId, ...)
 	if otherId ~= 0 then
-		if getRigidBodyType(otherId) == RigidBodyType.DYNAMIC then
+		if getRigidBodyType(otherId) == RigidBodyType.DYNAMIC and getSplitType(otherId) ~= 0 then
 			self.whs.currentScanFound[otherId] = true
 			self.whs.logs[otherId] = otherId
 		end
@@ -298,9 +302,45 @@ function WoodHarvesterSound:onDraw()
 	end
 end
 
-function whs_overlapCallback(shapeId, x, y, z, distance)
-	if shapeId == g_currentMission.whs.overlapTarget then
-		g_currentMission.whs.overlapHit = true
+function closestDistBetweenSegments(p1, p2, p3, p4)
+	local d1 = {p2[1]-p1[1], p2[2]-p1[2], p2[3]-p1[3]}
+	local d2 = {p4[1]-p3[1], p4[2]-p3[2], p4[3]-p3[3]}
+	local r  = {p1[1]-p3[1], p1[2]-p3[2], p1[3]-p3[3]}
+
+	local a = MathUtil.dotProduct(d1[1],d1[2],d1[3], d1[1],d1[2],d1[3])
+	local e = MathUtil.dotProduct(d2[1],d2[2],d2[3], d2[1],d2[2],d2[3])
+	local f = MathUtil.dotProduct(d2[1],d2[2],d2[3], r[1],r[2],r[3])
+
+	local s, t
+	if a <= 1e-10 and e <= 1e-10 then
+		s, t = 0, 0
+	elseif a <= 1e-10 then
+		s, t = 0, math.max(0, math.min(f / e, 1))
+	else
+		local c = MathUtil.dotProduct(d1[1],d1[2],d1[3], r[1],r[2],r[3])
+		if e <= 1e-10 then
+			t = 0
+			s = math.max(0, math.min(-c / a, 1))
+		else
+			local b = MathUtil.dotProduct(d1[1],d1[2],d1[3], d2[1],d2[2],d2[3])
+			local denom = a * e - b * b
+			if denom ~= 0 then
+				s = math.max(0, math.min((b * f - c * e) / denom, 1))
+			else
+				s = 0
+			end
+			t = (b * s + f) / e
+			if t < 0 then
+				t = 0
+				s = math.max(0, math.min(-c / a, 1))
+			elseif t > 1 then
+				t = 1
+				s = math.max(0, math.min((b - c) / a, 1))
+			end
+		end
 	end
-	return true
+
+	local c1 = {p1[1]+d1[1]*s, p1[2]+d1[2]*s, p1[3]+d1[3]*s}
+	local c2 = {p3[1]+d2[1]*t, p3[2]+d2[2]*t, p3[3]+d2[3]*t}
+	return MathUtil.vector3Length(c1[1]-c2[1], c1[2]-c2[2], c1[3]-c2[3])
 end
