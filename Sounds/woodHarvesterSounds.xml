@@ -1,28 +1,90 @@
-<sounds>
-    <woodSounds>
-        <logCollision>
-            <sample>
-                <file fileName="Sounds/logs01.wav" />
-            </sample>
-            <sample>
-                <file fileName="Sounds/logs02.wav" />
-            </sample>
-        </logCollision>
-        <groundCollision>
-            <sample>
-                <file fileName="Sounds/ground01.wav" />
-            </sample>
-            <sample>
-                <file fileName="Sounds/ground02.wav" />
-            </sample>
-            <sample>
-                <file fileName="Sounds/ground03.wav" />
-            </sample>
-        </groundCollision>
-        <treeFall>
-            <sample>
-                <file fileName="Sounds/fall01.wav" />
-            </sample>
-        </treeFall>
-    </woodSounds>
-</sounds>
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<woodHarvesterSound>
+	<sounds>
+		<logs file="sounds/logs02.ogg" innerRadius="5.0" outerRadius="80.0">
+			<volume indoor="3" outdoor="5.00" />
+			<pitch indoor="0.75" outdoor="0.75" />
+			<lowpassGain indoor="0.50" outdoor="1.00" />
+		</logs>
+		<logs file="sounds/logs04.ogg" innerRadius="5.0" outerRadius="80.0">
+			<volume indoor="2" outdoor="13.00" />
+			<pitch indoor="0.9" outdoor="0.9" />
+			<lowpassGain indoor="0.50" outdoor="1.00" />
+		</logs>
+		<logs file="sounds/logs06.ogg" innerRadius="5.0" outerRadius="80.0">
+			<volume indoor="2" outdoor="5.00" />
+			<pitch indoor="0.95" outdoor="0.95" />
+			<lowpassGain indoor="0.50" outdoor="1.00" />
+		</logs>
+		<logs file="sounds/logs01.ogg" innerRadius="5.0" outerRadius="80.0">
+			<volume indoor="2" outdoor="4.00" />
+			<pitch indoor="0.85" outdoor="0.85" />
+			<lowpassGain indoor="0.50" outdoor="1.00" />
+		</logs>
+		<logs file="sounds/logs03.ogg" innerRadius="5.0" outerRadius="80.0">
+			<volume indoor="2" outdoor="8.00" />
+			<pitch indoor="0.85" outdoor="0.85" />
+			<lowpassGain indoor="0.50" outdoor="1.00" />
+		</logs>
+		<logs file="sounds/logs05.ogg" innerRadius="5.0" outerRadius="80.0">
+			<volume indoor="2" outdoor="6.00" />
+			<pitch indoor="0.85" outdoor="0.85" />
+			<lowpassGain indoor="0.50" outdoor="1.00" />
+		</logs>
+		<ground file="sounds/ground01.ogg" innerRadius="5.0" outerRadius="80.0">
+			<volume indoor="2" outdoor="5.00" />
+			<pitch indoor="1" outdoor="1" />
+			<lowpassGain indoor="0.50" outdoor="1.00" />
+		</ground>
+		<ground file="sounds/ground02.ogg" innerRadius="5.0" outerRadius="80.0">
+			<volume indoor="4" outdoor="9.00" />
+			<pitch indoor="1.00" outdoor="1.00" />
+			<lowpassGain indoor="0.50" outdoor="1.00" />
+		</ground>
+		<ground file="sounds/ground03.ogg" innerRadius="5.0" outerRadius="80.0">
+			<volume indoor="2" outdoor="4.00" />
+			<pitch indoor="1" outdoor="1" />
+			<lowpassGain indoor="0.50" outdoor="1.00" />
+		</ground>
+		<ground file="sounds/ground04.ogg" innerRadius="5.0" outerRadius="80.0">
+			<volume indoor="2" outdoor="5.00" />
+			<pitch indoor="0.75" outdoor="0.75" />
+			<lowpassGain indoor="0.50" outdoor="1.00" />
+		</ground>
+		<fall file="sounds/tree_fall_01_3s.ogg" innerRadius="5.0" outerRadius="80.0">
+			<volume indoor="3" outdoor="4.00" />
+			<pitch indoor="1" outdoor="1" />
+			<lowpassGain indoor="0.50" outdoor="1.00" />
+		</fall>
+		<fall file="sounds/tree_fall_02_5s.ogg" innerRadius="5.0" outerRadius="80.0">
+			<volume indoor="3" outdoor="4.00" />
+			<pitch indoor="1" outdoor="1" />
+			<lowpassGain indoor="0.50" outdoor="1.00" />
+		</fall>
+		<fall file="sounds/tree_fall_03_5s.ogg" innerRadius="5.0" outerRadius="80.0">
+			<volume indoor="3" outdoor="4.00" />
+			<pitch indoor="1" outdoor="1" />
+			<lowpassGain indoor="0.50" outdoor="1.00" />
+		</fall>
+		<fall file="sounds/tree_fall_04_5s.ogg" innerRadius="5.0" outerRadius="80.0">
+			<volume indoor="3" outdoor="4.00" />
+			<pitch indoor="1" outdoor="1" />
+			<lowpassGain indoor="0.50" outdoor="1.00" />
+		</fall>
+		<fall file="sounds/tree_fall_05_5s.ogg" innerRadius="5.0" outerRadius="80.0">
+			<volume indoor="3" outdoor="4.00" />
+			<pitch indoor="1" outdoor="1" />
+			<lowpassGain indoor="0.50" outdoor="1.00" />
+		</fall>
+		<fall file="sounds/tree_fall_06_5s - big tree.ogg" innerRadius="5.0" outerRadius="80.0">
+			<volume indoor="3" outdoor="4.00" />
+			<pitch indoor="1" outdoor="1" />
+			<lowpassGain indoor="0.50" outdoor="1.00" />
+		</fall>
+		<fall file="sounds/tree_fall_07_5s - big tree.ogg" innerRadius="5.0" outerRadius="80.0">
+			<volume indoor="3" outdoor="4.00" />
+			<pitch indoor="1" outdoor="1" />
+			<lowpassGain indoor="0.50" outdoor="1.00" />
+		</fall>
+	</sounds>
+</woodHarvesterSound>
