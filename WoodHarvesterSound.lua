@@ -166,7 +166,7 @@ function WoodHarvesterSound:onUpdate(dt)
 						self.whs.lastAngVel[v] = angVelocity
 
 						-- Ground Impact
-						if not isAttached and ((comDistToGround < 0.25 and velocity > 0.125) or (comDistToGround < 0.5 and angVelocity > 0.5)) then
+						if not isAttached and ((comDistToGround < 0.25 and -vy > 0.125) or (comDistToGround < 0.5 and angVelocity > 0.5)) then
 							if WoodHarvesterSound.checkIsInRange(self, v) then
 								WoodHarvesterSound.playSound(self, self.whs.samplesGround, wcomX, wcomY, wcomZ)
 							end
