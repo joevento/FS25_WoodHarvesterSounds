@@ -38,7 +38,7 @@ function WoodHarvesterSound:onLoad(savegame)
 	self.whs.searchRadius = 1000
 
 	if self.isClient then
-			local modDir = WoodHarvesterSound.modDirectory
+		local modDir = WoodHarvesterSound.modDirectory
 		local xmlPath = Utils.getFilename("sounds/woodHarvesterSounds.xml", modDir)
 		local xmlFile = loadXMLFile("WoodHarvesterSoundXML", xmlPath)
 
@@ -98,9 +98,9 @@ function WoodHarvesterSound:acquireSoundNode()
 			entry.inUse = true
 			return entry
 		end
-				end
-				return nil
-			end
+	end
+	return nil
+end
 
 function WoodHarvesterSound:releaseSoundNodes()
 	for _, entry in ipairs(self.whs.soundNodePool) do
@@ -177,10 +177,10 @@ function WoodHarvesterSound:onUpdate(dt)
 							if WoodHarvesterSound.checkIsInRange(self, v) then
 								if getUserAttribute(v, "whs_hasFelled") ~= true then
 									WoodHarvesterSound.playSound(self, self.whs.samplesFall, wcomX, wcomY, wcomZ)
-										setUserAttribute(v, "whs_hasFelled", "Boolean", true)
-									end
+									setUserAttribute(v, "whs_hasFelled", "Boolean", true)
 								end
 							end
+						end
 
 						-- Log vs Log Collision logic
 						for j, vv in pairs(self.whs.logs) do
@@ -192,19 +192,19 @@ function WoodHarvesterSound:onUpdate(dt)
 								local relVel = MathUtil.vector3Length(vx - vx2, vy - vy2, vz - vz2)
 
 								if relVel > 0.4 then
-									local sizeX, sizeY, _ = getSplitShapeStats(v)
+									local sizeX, sizeY, _   = getSplitShapeStats(v)
 									local sizeX2, sizeY2, _ = getSplitShapeStats(vv)
 
-									local halfLen1 = sizeX / 2
-									local halfLen2 = sizeX2 / 2
-									local combinedRadius = (sizeY + sizeY2) / 2
+									local halfLen1          = sizeX / 2
+									local halfLen2          = sizeX2 / 2
+									local combinedRadius    = (sizeY + sizeY2) / 2
 
-									local v_start  = { localToWorld(v,  0, -halfLen1, 0) }
-									local v_end    = { localToWorld(v,  0,  halfLen1, 0) }
-									local vv_start = { localToWorld(vv, 0, -halfLen2, 0) }
-									local vv_end   = { localToWorld(vv, 0,  halfLen2, 0) }
+									local v_start           = { localToWorld(v, 0, -halfLen1, 0) }
+									local v_end             = { localToWorld(v, 0, halfLen1, 0) }
+									local vv_start          = { localToWorld(vv, 0, -halfLen2, 0) }
+									local vv_end            = { localToWorld(vv, 0, halfLen2, 0) }
 
-									local dist = closestDistBetweenSegments(v_start, v_end, vv_start, vv_end)
+									local dist              = closestDistBetweenSegments(v_start, v_end, vv_start, vv_end)
 
 									if dist < combinedRadius then
 										if WoodHarvesterSound.checkIsInRange(self, v) then
@@ -257,8 +257,8 @@ function WoodHarvesterSound:playSound(samples, x, y, z)
 	local entry = WoodHarvesterSound.acquireSoundNode(self)
 	if entry == nil then return end
 
-		local index = math.random(1, #samples)
-		local sample = samples[index]
+	local index = math.random(1, #samples)
+	local sample = samples[index]
 
 	if sample == nil then
 		entry.inUse = false
@@ -303,13 +303,13 @@ function WoodHarvesterSound:onDraw()
 end
 
 function closestDistBetweenSegments(p1, p2, p3, p4)
-	local d1 = {p2[1]-p1[1], p2[2]-p1[2], p2[3]-p1[3]}
-	local d2 = {p4[1]-p3[1], p4[2]-p3[2], p4[3]-p3[3]}
-	local r  = {p1[1]-p3[1], p1[2]-p3[2], p1[3]-p3[3]}
+	local d1 = { p2[1] - p1[1], p2[2] - p1[2], p2[3] - p1[3] }
+	local d2 = { p4[1] - p3[1], p4[2] - p3[2], p4[3] - p3[3] }
+	local r  = { p1[1] - p3[1], p1[2] - p3[2], p1[3] - p3[3] }
 
-	local a = MathUtil.dotProduct(d1[1],d1[2],d1[3], d1[1],d1[2],d1[3])
-	local e = MathUtil.dotProduct(d2[1],d2[2],d2[3], d2[1],d2[2],d2[3])
-	local f = MathUtil.dotProduct(d2[1],d2[2],d2[3], r[1],r[2],r[3])
+	local a  = MathUtil.dotProduct(d1[1], d1[2], d1[3], d1[1], d1[2], d1[3])
+	local e  = MathUtil.dotProduct(d2[1], d2[2], d2[3], d2[1], d2[2], d2[3])
+	local f  = MathUtil.dotProduct(d2[1], d2[2], d2[3], r[1], r[2], r[3])
 
 	local s, t
 	if a <= 1e-10 and e <= 1e-10 then
@@ -317,12 +317,12 @@ function closestDistBetweenSegments(p1, p2, p3, p4)
 	elseif a <= 1e-10 then
 		s, t = 0, math.max(0, math.min(f / e, 1))
 	else
-		local c = MathUtil.dotProduct(d1[1],d1[2],d1[3], r[1],r[2],r[3])
+		local c = MathUtil.dotProduct(d1[1], d1[2], d1[3], r[1], r[2], r[3])
 		if e <= 1e-10 then
 			t = 0
 			s = math.max(0, math.min(-c / a, 1))
 		else
-			local b = MathUtil.dotProduct(d1[1],d1[2],d1[3], d2[1],d2[2],d2[3])
+			local b = MathUtil.dotProduct(d1[1], d1[2], d1[3], d2[1], d2[2], d2[3])
 			local denom = a * e - b * b
 			if denom ~= 0 then
 				s = math.max(0, math.min((b * f - c * e) / denom, 1))
@@ -340,7 +340,7 @@ function closestDistBetweenSegments(p1, p2, p3, p4)
 		end
 	end
 
-	local c1 = {p1[1]+d1[1]*s, p1[2]+d1[2]*s, p1[3]+d1[3]*s}
-	local c2 = {p3[1]+d2[1]*t, p3[2]+d2[2]*t, p3[3]+d2[3]*t}
-	return MathUtil.vector3Length(c1[1]-c2[1], c1[2]-c2[2], c1[3]-c2[3])
+	local c1 = { p1[1] + d1[1] * s, p1[2] + d1[2] * s, p1[3] + d1[3] * s }
+	local c2 = { p3[1] + d2[1] * t, p3[2] + d2[2] * t, p3[3] + d2[3] * t }
+	return MathUtil.vector3Length(c1[1] - c2[1], c1[2] - c2[2], c1[3] - c2[3])
 end
