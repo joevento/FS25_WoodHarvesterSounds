@@ -1,99 +1,73 @@
+local modDir = g_currentModDirectory or ""
 local NUM_SOUND_NODES = 8
 
-function WoodHarvesterSound.prerequisitesPresent(specializations)
-	return SpecializationUtil.hasSpecialization(Motorized, specializations)
+WoodHarvesterSound = {}
+WoodHarvesterSound.modDir = modDir
+
+local whs = {}
+
+function WoodHarvesterSound:loadMap(filename)
+	whs.logs = {}
+	whs.lastAngVel = {}
+	whs.currentScanFound = {}
+	whs.timer = 0
+	whs.debug = false
+	whs.searchRadius = 1000
+	whs.isLogsPlaying = false
+
+	local xmlPath = Utils.getFilename("sounds/woodHarvesterSounds.xml", modDir)
+	local xmlFile = loadXMLFile("WoodHarvesterSoundXML", xmlPath)
+
+	if xmlFile ~= nil and xmlFile ~= 0 then
+		local components = { { node = getRootNode() } }
+
+		whs.samplesLogs = g_soundManager:loadSamplesFromXML(
+			xmlFile, "woodHarvesterSound.sounds", "logs",
+			modDir, components, 1, AudioGroup.ENVIRONMENT, nil, nil
+		)
+		whs.samplesGround = g_soundManager:loadSamplesFromXML(
+			xmlFile, "woodHarvesterSound.sounds", "ground",
+			modDir, components, 1, AudioGroup.ENVIRONMENT, nil, nil
+		)
+		whs.samplesFall = g_soundManager:loadSamplesFromXML(
+			xmlFile, "woodHarvesterSound.sounds", "fall",
+			modDir, components, 1, AudioGroup.ENVIRONMENT, nil, nil
+		)
+
+		delete(xmlFile)
+	end
+
+	whs.soundNodePool = {}
+	for i = 1, NUM_SOUND_NODES do
+		local node = createTransformGroup("whs_soundNode_" .. i)
+		link(getRootNode(), node)
+		table.insert(whs.soundNodePool, { node = node, inUse = false, sample = nil })
+	end
 end
 
-function WoodHarvesterSound.registerEventListeners(vehicleType)
-	SpecializationUtil.registerEventListener(vehicleType, "onLoad", WoodHarvesterSound)
-	SpecializationUtil.registerEventListener(vehicleType, "onUpdate", WoodHarvesterSound)
-	SpecializationUtil.registerEventListener(vehicleType, "onDraw", WoodHarvesterSound)
-	SpecializationUtil.registerEventListener(vehicleType, "onPostCut", WoodHarvesterSound)
-end
+function WoodHarvesterSound:deleteMap()
+	if whs.samplesLogs ~= nil then
+		g_soundManager:deleteSamples(whs.samplesLogs)
+	end
+	if whs.samplesGround ~= nil then
+		g_soundManager:deleteSamples(whs.samplesGround)
+	end
+	if whs.samplesFall ~= nil then
+		g_soundManager:deleteSamples(whs.samplesFall)
+	end
 
-function WoodHarvesterSound:onPostCut(shape, length, diameter, isBelowMinimum)
-	local spec = self.spec_woodHarvester
-	if spec.lastSplitShapes ~= nil then
-		local wasFelled = getUserAttribute(shape, "whs_hasFelled")
-		if wasFelled then
-			for _, newShape in pairs(spec.lastSplitShapes) do
-				if entityExists(newShape) then
-					setUserAttribute(newShape, "whs_hasFelled", true)
-				end
+	if whs.soundNodePool ~= nil then
+		for _, entry in ipairs(whs.soundNodePool) do
+			if entry.node ~= nil and entry.node ~= 0 then
+				delete(entry.node)
 			end
 		end
 	end
+	whs = {}
 end
 
-function WoodHarvesterSound:onLoad(savegame)
-	self.whs = {}
-
-	self.whs.root = self.rootNode
-	self.whs.logs = {}
-	self.whs.logsInfo = ""
-	self.whs.logsInfo2 = ""
-	self.whs.logsInfo3 = ""
-	self.whs.timer = 0
-	self.whs.debug = false
-	self.whs.searchRadius = 1000
-
-	if self.isClient then
-		local modDir = WoodHarvesterSound.modDirectory
-		local xmlPath = Utils.getFilename("sounds/woodHarvesterSounds.xml", modDir)
-		local xmlFile = loadXMLFile("WoodHarvesterSoundXML", xmlPath)
-
-		if xmlFile ~= nil and xmlFile ~= 0 then
-			local components = { { node = getRootNode() } }
-
-			self.whs.samplesLogs = g_soundManager:loadSamplesFromXML(
-				xmlFile, "woodHarvesterSound.sounds", "logs",
-				modDir, components, 1, AudioGroup.ENVIRONMENT, nil, nil
-			)
-			self.whs.samplesGround = g_soundManager:loadSamplesFromXML(
-				xmlFile, "woodHarvesterSound.sounds", "ground",
-				modDir, components, 1, AudioGroup.ENVIRONMENT, nil, nil
-			)
-			self.whs.samplesFall = g_soundManager:loadSamplesFromXML(
-				xmlFile, "woodHarvesterSound.sounds", "fall",
-				modDir, components, 1, AudioGroup.ENVIRONMENT, nil, nil
-			)
-
-			delete(xmlFile)
-		end
-
-		self.whs.soundNodePool = {}
-		for i = 1, NUM_SOUND_NODES do
-			local node = createTransformGroup("whs_soundNode_" .. i)
-			link(getRootNode(), node)
-			table.insert(self.whs.soundNodePool, { node = node, inUse = false, sample = nil })
-		end
-	end
-end
-
-function WoodHarvesterSound:onDelete()
-	if self.isClient and self.whs ~= nil then
-		if self.whs.samplesLogs ~= nil then
-			g_soundManager:deleteSamples(self.whs.samplesLogs)
-		end
-		if self.whs.samplesGround ~= nil then
-			g_soundManager:deleteSamples(self.whs.samplesGround)
-		end
-		if self.whs.samplesFall ~= nil then
-			g_soundManager:deleteSamples(self.whs.samplesFall)
-		end
-
-		if self.whs.soundNodePool ~= nil then
-			for _, entry in ipairs(self.whs.soundNodePool) do
-				if entry.node ~= nil and entry.node ~= 0 then
-					delete(entry.node)
-				end
-			end
-		end
-	end
-end
-
-function WoodHarvesterSound:acquireSoundNode()
-	for _, entry in ipairs(self.whs.soundNodePool) do
+local function acquireSoundNode()
+	for _, entry in ipairs(whs.soundNodePool) do
 		if not entry.inUse then
 			entry.inUse = true
 			return entry
@@ -102,8 +76,8 @@ function WoodHarvesterSound:acquireSoundNode()
 	return nil
 end
 
-function WoodHarvesterSound:releaseSoundNodes()
-	for _, entry in ipairs(self.whs.soundNodePool) do
+local function releaseSoundNodes()
+	for _, entry in ipairs(whs.soundNodePool) do
 		if entry.inUse and entry.sample ~= nil then
 			if not g_soundManager:getIsSamplePlaying(entry.sample) then
 				entry.inUse = false
@@ -113,114 +87,140 @@ function WoodHarvesterSound:releaseSoundNodes()
 	end
 end
 
-function WoodHarvesterSound:onUpdate(dt)
-	if self:getIsActive() then
-		if self.whs.lastAngVel == nil then
-			self.whs.lastAngVel = {}
-		end
+local function playSound(samples, x, y, z)
+	if samples == nil or #samples == 0 then return end
 
-		if self.isClient then
-			WoodHarvesterSound.releaseSoundNodes(self)
-		end
+	local entry = acquireSoundNode()
+	if entry == nil then return end
 
-		self.whs.timer = self.whs.timer + dt
-		if self.whs.timer >= 100 then
-			self.whs.timer = 0
+	local index = math.random(1, #samples)
+	local sample = samples[index]
 
-			local px, py, pz = getWorldTranslation(self.whs.root)
-			self.whs.currentScanFound = {}
+	if sample == nil then
+		entry.inUse = false
+		return
+	end
 
-			local mask = 2048 + 262144 + 16777216
+	setWorldTranslation(sample.soundNode, x, y, z)
+	g_soundManager:playSample(sample)
+	entry.sample = sample
+end
 
-			if self.collisionTestCallback == nil then
-				self.collisionTestCallback = WoodHarvesterSound.collisionTestCallback
+local function getPlayerPos()
+	if g_localPlayer ~= nil and g_localPlayer.rootNode ~= 0 then
+		return getWorldTranslation(g_localPlayer.rootNode)
+	end
+	return nil, nil, nil
+end
+
+local function checkIsInRange(node)
+	local tx, ty, tz = getPlayerPos()
+	if tx ~= nil and node ~= nil and entityExists(node) then
+		local x2, y2, z2 = getWorldTranslation(node)
+		local dist = MathUtil.vector3Length(tx - x2, ty - y2, tz - z2)
+		return dist < 4000
+	end
+
+	return false
+end
+
+function WoodHarvesterSound:update(dt)
+	if whs.soundNodePool == nil then
+		return
+	end
+
+	releaseSoundNodes()
+
+	whs.timer = whs.timer + dt
+	if whs.timer < 75 then
+		return
+	end
+	whs.timer = 0
+
+	local px, py, pz = getPlayerPos()
+	if px == nil then
+		return
+	end
+
+	whs.currentScanFound = {}
+
+	local mask = 2048 + 262144 + 16777216
+	overlapSphere(px, py, pz, whs.searchRadius, "collisionTestCallback", self, mask, true, false, true, false)
+
+	if next(whs.currentScanFound) ~= nil then
+		for logId in pairs(whs.logs) do
+			if not whs.currentScanFound[logId] then
+				whs.logs[logId] = nil
 			end
+		end
+	end
 
-			overlapSphere(px, py, pz, self.whs.searchRadius, "collisionTestCallback", self, mask, true, false, true,
-				false)
+	for logId, v in pairs(whs.logs) do
+		if v ~= nil and entityExists(v) then
+			local vx, vy, vz = getLinearVelocity(v)
+			local velocity = MathUtil.vector3Length(vx, vy, vz)
 
-			if next(self.whs.currentScanFound) ~= nil then
-				for logId, _ in pairs(self.whs.logs) do
-					if not self.whs.currentScanFound[logId] then
-						self.whs.logs[logId] = nil
+			if velocity > 0.1 then
+				local comX, comY, comZ = getCenterOfMass(v)
+				local wcomX, wcomY, wcomZ = localToWorld(v, comX, comY, comZ)
+				local x, y, z = getWorldTranslation(v)
+				local terrainY = getTerrainHeightAtWorldPos(g_currentMission.terrainRootNode, wcomX, wcomY, wcomZ)
+				local comDistToGround = wcomY - terrainY
+
+				local rotX, rotY, rotZ = getAngularVelocity(v)
+				local angVelocity = MathUtil.vector3Length(rotX, rotY, rotZ)
+
+				whs.lastAngVel[v] = angVelocity
+
+				-- Ground Impact
+				if (comDistToGround < 0.5 and -vy > 0.5) then
+					if checkIsInRange(v) then
+						playSound(whs.samplesGround, wcomX, wcomY, wcomZ)
 					end
 				end
-			end
 
-			for logId, v in pairs(self.whs.logs) do
-				if v ~= nil and entityExists(v) then
-					local isAttached = (self.spec_woodHarvester.attachedSplitShape == v)
-					local vx, vy, vz = getLinearVelocity(v)
-					local velocity = MathUtil.vector3Length(vx, vy, vz)
-
-					if velocity > 0.1 then
-						local comX, comY, comZ = getCenterOfMass(v)
-						local wcomX, wcomY, wcomZ = localToWorld(v, comX, comY, comZ)
-						local x, y, z = getWorldTranslation(v)
-						local terrainY = getTerrainHeightAtWorldPos(g_currentMission.terrainRootNode, wcomX, wcomY, wcomZ)
-						local comDistToGround = wcomY - terrainY
-
-						local rotX, rotY, rotZ = getAngularVelocity(v)
-						local angVelocity = MathUtil.vector3Length(rotX, rotY, rotZ)
-
-						self.whs.lastAngVel[v] = angVelocity
-
-						-- Ground Impact
-						if not isAttached and ((comDistToGround < 0.25 and -vy > 0.125) or (comDistToGround < 0.5 and angVelocity > 0.5)) then
-							if WoodHarvesterSound.checkIsInRange(self, v) then
-								WoodHarvesterSound.playSound(self, self.whs.samplesGround, wcomX, wcomY, wcomZ)
-							end
+				-- Tree Falling
+				if timeToGround({ wcomX, wcomY, wcomZ }, { x, y, z }, { rotX, rotY, rotZ }, terrainY) < 0.75 then
+					if checkIsInRange(v) then
+						if getUserAttribute(v, "whs_hasFelled") ~= true then
+							playSound(whs.samplesFall, wcomX, wcomY, wcomZ)
+							setUserAttribute(v, "whs_hasFelled", "Boolean", true)
 						end
+					end
+				end
 
-						-- Tree Falling
-						if timeToGround({ wcomX, wcomY, wcomZ }, { x, y, z }, { rotX, rotY, rotZ }, terrainY) < 0.75 then
-							if WoodHarvesterSound.checkIsInRange(self, v) then
-								if getUserAttribute(v, "whs_hasFelled") ~= true then
-									WoodHarvesterSound.playSound(self, self.whs.samplesFall, wcomX, wcomY, wcomZ)
-									setUserAttribute(v, "whs_hasFelled", "Boolean", true)
+				-- Log vs Log Collision logic
+				for _, vv in pairs(whs.logs) do
+					if v ~= vv and entityExists(vv) then
+						local vx2, vy2, vz2 = getLinearVelocity(vv)
+						local relVel = MathUtil.vector3Length(vx - vx2, vy - vy2, vz - vz2)
+
+						if relVel > 0.4 then
+							local sizeX, sizeY, _   = getSplitShapeStats(v)
+							local sizeX2, sizeY2, _ = getSplitShapeStats(vv)
+
+							local halfLen1          = sizeX / 2
+							local halfLen2          = sizeX2 / 2
+							local combinedRadius    = (sizeY + sizeY2) / 2
+
+							local v_start           = { localToWorld(v, 0, -halfLen1, 0) }
+							local v_end             = { localToWorld(v, 0, halfLen1, 0) }
+							local vv_start          = { localToWorld(vv, 0, -halfLen2, 0) }
+							local vv_end            = { localToWorld(vv, 0, halfLen2, 0) }
+
+							local dist              = closestDistBetweenSegments(v_start, v_end, vv_start, vv_end)
+
+							if dist < combinedRadius then
+								if checkIsInRange(v) and not whs.isLogsPlaying then
+									playSound(whs.samplesLogs, x, y, z)
 								end
 							end
 						end
-
-						-- Log vs Log Collision logic
-						for j, vv in pairs(self.whs.logs) do
-							local isAttached = (self.spec_woodHarvester.attachedSplitShape == v)
-							local isOtherAttached = (spec ~= nil and self.spec_woodHarvester.attachedSplitShape == vv)
-
-							if v ~= vv and not isAttached and not isOtherAttached and entityExists(vv) and self.spec_woodHarvester.attachedSplitShape ~= nil then
-								local vx2, vy2, vz2 = getLinearVelocity(vv)
-								local relVel = MathUtil.vector3Length(vx - vx2, vy - vy2, vz - vz2)
-
-								if relVel > 0.4 then
-									local sizeX, sizeY, _   = getSplitShapeStats(v)
-									local sizeX2, sizeY2, _ = getSplitShapeStats(vv)
-
-									local halfLen1          = sizeX / 2
-									local halfLen2          = sizeX2 / 2
-									local combinedRadius    = (sizeY + sizeY2) / 2
-
-									local v_start           = { localToWorld(v, 0, -halfLen1, 0) }
-									local v_end             = { localToWorld(v, 0, halfLen1, 0) }
-									local vv_start          = { localToWorld(vv, 0, -halfLen2, 0) }
-									local vv_end            = { localToWorld(vv, 0, halfLen2, 0) }
-
-									local dist              = closestDistBetweenSegments(v_start, v_end, vv_start, vv_end)
-
-									if dist < combinedRadius then
-										if WoodHarvesterSound.checkIsInRange(self, v) then
-											if not self.whs.isLogsPlaying then
-												WoodHarvesterSound.playSound(self, self.whs.samplesLogs, x, y, z)
-											end
-										end
-									end
-								end
-							end
-						end
 					end
-				else
-					self.whs.logs[logId] = nil
 				end
 			end
+		else
+			whs.logs[logId] = nil
 		end
 	end
 end
@@ -241,56 +241,20 @@ function timeToGround(com, pivot, angularVel, terrainHeight)
 	return dy / -vy
 end
 
-function WoodHarvesterSound:collisionTestCallback(otherId, ...)
+function WoodHarvesterSound:collisionTestCallback(otherId)
 	if otherId ~= 0 then
 		if getRigidBodyType(otherId) == RigidBodyType.DYNAMIC and getSplitType(otherId) ~= 0 then
-			self.whs.currentScanFound[otherId] = true
-			self.whs.logs[otherId] = otherId
+			whs.currentScanFound[otherId] = true
+			whs.logs[otherId] = otherId
 		end
 	end
 end
 
-function WoodHarvesterSound:playSound(samples, x, y, z)
-	if not self.isClient then return end
-	if samples == nil or #samples == 0 then return end
-
-	local entry = WoodHarvesterSound.acquireSoundNode(self)
-	if entry == nil then return end
-
-	local index = math.random(1, #samples)
-	local sample = samples[index]
-
-	if sample == nil then
-		entry.inUse = false
-		return
-	end
-
-	setWorldTranslation(sample.soundNode, x, y, z)
-
-	g_soundManager:playSample(sample)
-	entry.sample = sample
-end
-
-function WoodHarvesterSound:checkIsInRange(node)
-	local tx, ty, tz
-
-	if g_localPlayer ~= nil and g_localPlayer.rootNode ~= 0 then
-		tx, ty, tz = getWorldTranslation(g_localPlayer.rootNode)
-	end
-	if tx ~= nil and node ~= nil and entityExists(node) then
-		local x2, y2, z2 = getWorldTranslation(node)
-		local dist = MathUtil.vector3Length(tx - x2, ty - y2, tz - z2)
-		return dist < 4000
-	end
-
-	return false
-end
-
-function WoodHarvesterSound:onDraw()
-	if self.isClient and self:getIsActive() and self.whs.debug then
+function WoodHarvesterSound:draw()
+	if whs.debug and g_localPlayer ~= nil then
 		setTextColor(0, 6307, 0, 6307, 0.6307, 1)
-		renderText(0, 55, 0, 75, 0.013, "WHS Active Logs: " .. tostring(table.size(self.whs.logs)))
-		for i, v in pairs(self.whs.logs) do
+		renderText(0.55, 0.75, 0.013, "WHS Active Logs: " .. tostring(table.size(whs.logs)))
+		for _, v in pairs(whs.logs) do
 			if entityExists(v) then
 				local x, y, z = getWorldTranslation(v)
 				local vx, vy, vz = getLinearVelocity(v)
@@ -344,3 +308,5 @@ function closestDistBetweenSegments(p1, p2, p3, p4)
 	local c2 = { p3[1] + d2[1] * t, p3[2] + d2[2] * t, p3[3] + d2[3] * t }
 	return MathUtil.vector3Length(c1[1] - c2[1], c1[2] - c2[2], c1[3] - c2[3])
 end
+
+addModEventListener(WoodHarvesterSound)

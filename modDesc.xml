@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <modDesc descVersion="105">
 	<author>DicoFlower8890</author>
-	<version>0.2.3.1</version>
+	<version>0.2.4.0</version>
 	<title>
 		<en>Wood Harvester Sounds</en>
 	</title>
@@ -11,6 +11,6 @@
 	<iconFilename>icon.dds</iconFilename>
 	<multiplayer supported="true"/>
 	<extraSourceFiles>
-		<sourceFile filename="Register.lua" />
+		<sourceFile filename="WoodHarvesterSound.lua" />
 	</extraSourceFiles>
 </modDesc>
