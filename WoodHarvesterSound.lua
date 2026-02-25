@@ -102,6 +102,10 @@ local function playSound(samples, x, y, z)
 	end
 
 	setWorldTranslation(sample.soundNode, x, y, z)
+	local pitch = g_soundManager:getCurrentSamplePitch(sample)
+	pitch = pitch + (math.random() * 0.4 - 0.2)
+	--Doesn't seem to actually change it tho, giants problem?
+	g_soundManager:setSamplePitch(sample, pitch)
 	g_soundManager:playSample(sample)
 	entry.sample = sample
 end
@@ -118,7 +122,7 @@ local function checkIsInRange(node)
 	if tx ~= nil and node ~= nil and entityExists(node) then
 		local x2, y2, z2 = getWorldTranslation(node)
 		local dist = MathUtil.vector3Length(tx - x2, ty - y2, tz - z2)
-		return dist < 4000
+		return dist < whs.searchRadius
 	end
 
 	return false
