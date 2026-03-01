@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <modDesc descVersion="105">
 	<author>DicoFlower8890</author>
-	<version>0.2.4.0</version>
+	<version>0.2.5.0</version>
 	<title>
 		<en>Wood Harvester Sounds</en>
 	</title>
 	<description>
-		<en><![CDATA[This mod plays sounds when you are logging with any vehicles.]]></en>
+		<en><![CDATA[This mod plays sounds when you are handeling trees and logs.]]></en>
 	</description>
 	<iconFilename>icon.dds</iconFilename>
 	<multiplayer supported="true"/>
