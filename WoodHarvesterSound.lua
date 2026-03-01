@@ -11,7 +11,6 @@ function WoodHarvesterSound:loadMap(filename)
 	whs.lastAngVel = {}
 	whs.currentScanFound = {}
 	whs.timer = 0
-	whs.debug = false
 	whs.searchRadius = 1000
 	whs.isLogsPlaying = false
 
@@ -250,22 +249,6 @@ function WoodHarvesterSound:collisionTestCallback(otherId)
 		if getRigidBodyType(otherId) == RigidBodyType.DYNAMIC and getSplitType(otherId) ~= 0 then
 			whs.currentScanFound[otherId] = true
 			whs.logs[otherId] = otherId
-		end
-	end
-end
-
-function WoodHarvesterSound:draw()
-	if whs.debug and g_localPlayer ~= nil then
-		setTextColor(0, 6307, 0, 6307, 0.6307, 1)
-		renderText(0.55, 0.75, 0.013, "WHS Active Logs: " .. tostring(table.size(whs.logs)))
-		for _, v in pairs(whs.logs) do
-			if entityExists(v) then
-				local x, y, z = getWorldTranslation(v)
-				local vx, vy, vz = getLinearVelocity(v)
-				local vel = MathUtil.vector3Length(vx, vy, vz)
-				drawDebugLine(x, y, z, 1, 0, 0, x + vx, y + vy, z + vz, 1, 1, 1)
-				renderTextAtWorldPos(x, y + 0.5, z, string.format("Vel: %.2f", vel))
-			end
 		end
 	end
 end
