@@ -86,13 +86,18 @@ local function releaseSoundNodes()
 	end
 end
 
-local function playSound(samples, x, y, z)
+local function playSound(samples, x, y, z, override)
 	if samples == nil or #samples == 0 then return end
 
 	local entry = acquireSoundNode()
 	if entry == nil then return end
 
-	local index = math.random(1, #samples)
+	local index = 0
+	if override == nil then
+		index = math.random(1, #samples)
+	else
+		index = math.min(override, #samples)
+	end
 	local sample = samples[index]
 
 	if sample == nil then
@@ -183,10 +188,19 @@ function WoodHarvesterSound:update(dt)
 				end
 
 				-- Tree Falling
-				if timeToGround({ wcomX, wcomY, wcomZ }, { x, y, z }, { rotX, rotY, rotZ }, terrainY) < 0.75 then
-					if checkIsInRange(v) then
-						if getUserAttribute(v, "whs_hasFelled") ~= true then
-							playSound(whs.samplesFall, wcomX, wcomY, wcomZ)
+				if getUserAttribute(v, "whs_hasFelled") ~= true then
+					local selectedIndex = getUserAttribute(v, "whs_fallIndex")
+					if selectedIndex == nil then
+						selectedIndex = math.random(1, #whs.samplesFall)
+						setUserAttribute(v, "whs_fallIndex", "Integer", selectedIndex)
+					end
+
+					local threshold = (selectedIndex == 1) and 0.75 or math.huge
+					local ttg = timeToGround({ wcomX, wcomY, wcomZ }, { x, y, z }, { rotX, rotY, rotZ }, terrainY)
+
+					if ttg < threshold then
+						if checkIsInRange(v) then
+							playSound(whs.samplesFall, wcomX, wcomY, wcomZ, selectedIndex)
 							setUserAttribute(v, "whs_hasFelled", "Boolean", true)
 						end
 					end
