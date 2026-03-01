@@ -76,12 +76,7 @@
 			<pitch indoor="1" outdoor="1" />
 			<lowpassGain indoor="0.50" outdoor="1.00" />
 		</fall>
-		<fall file="sounds/tree_fall_06_5s - big tree.ogg" innerRadius="5.0" outerRadius="80.0">
-			<volume indoor="3" outdoor="4.00" />
-			<pitch indoor="1" outdoor="1" />
-			<lowpassGain indoor="0.50" outdoor="1.00" />
-		</fall>
-		<fall file="sounds/tree_fall_07_5s - big tree.ogg" innerRadius="5.0" outerRadius="80.0">
+		<fall file="sounds/tree_fall_06_5s.ogg" innerRadius="5.0" outerRadius="80.0">
 			<volume indoor="3" outdoor="4.00" />
 			<pitch indoor="1" outdoor="1" />
 			<lowpassGain indoor="0.50" outdoor="1.00" />
