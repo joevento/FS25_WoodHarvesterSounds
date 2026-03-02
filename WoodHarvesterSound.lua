@@ -10,6 +10,7 @@ function WoodHarvesterSound:loadMap(filename)
 	whs.logs = {}
 	whs.lastAngVel = {}
 	whs.currentScanFound = {}
+	whs.playingSound = {}
 	whs.timer = 0
 	whs.searchRadius = 1000
 	whs.isLogsPlaying = false
@@ -112,6 +113,7 @@ local function playSound(samples, x, y, z, override)
 	g_soundManager:setSamplePitch(sample, pitch)
 	g_soundManager:playSample(sample)
 	entry.sample = sample
+	return sample
 end
 
 local function getPlayerPos()
@@ -164,81 +166,89 @@ function WoodHarvesterSound:update(dt)
 	end
 
 	for logId, v in pairs(whs.logs) do
-		if v ~= nil and entityExists(v) then
-			local vx, vy, vz = getLinearVelocity(v)
-			local velocity = MathUtil.vector3Length(vx, vy, vz)
-
-			if velocity > 0.1 then
-				local comX, comY, comZ = getCenterOfMass(v)
-				local wcomX, wcomY, wcomZ = localToWorld(v, comX, comY, comZ)
-				local x, y, z = getWorldTranslation(v)
-				local terrainY = getTerrainHeightAtWorldPos(g_currentMission.terrainRootNode, wcomX, wcomY, wcomZ)
-				local comDistToGround = wcomY - terrainY
-
-				local rotX, rotY, rotZ = getAngularVelocity(v)
-				local angVelocity = MathUtil.vector3Length(rotX, rotY, rotZ)
-
-				whs.lastAngVel[v] = angVelocity
-
-				-- Ground Impact
-				if (comDistToGround < 0.5 and -vy > 0.5) then
-					if checkIsInRange(v) then
-						playSound(whs.samplesGround, wcomX, wcomY, wcomZ)
+		repeat
+			if v ~= nil and entityExists(v) then
+				if whs.playingSound[v] ~= nil then
+					if g_soundManager:getIsSamplePlaying(whs.playingSound[v]) then
+						break
 					end
+					whs.playingSound[v] = nil
 				end
+				local vx, vy, vz = getLinearVelocity(v)
+				local velocity = MathUtil.vector3Length(vx, vy, vz)
 
-				-- Tree Falling
-				if getUserAttribute(v, "whs_hasFelled") ~= true then
-					local selectedIndex = getUserAttribute(v, "whs_fallIndex")
-					if selectedIndex == nil then
-						selectedIndex = math.random(1, #whs.samplesFall)
-						setUserAttribute(v, "whs_fallIndex", "Integer", selectedIndex)
-					end
+				if velocity > 0.1 then
+					local comX, comY, comZ = getCenterOfMass(v)
+					local wcomX, wcomY, wcomZ = localToWorld(v, comX, comY, comZ)
+					local x, y, z = getWorldTranslation(v)
+					local terrainY = getTerrainHeightAtWorldPos(g_currentMission.terrainRootNode, wcomX, wcomY, wcomZ)
+					local comDistToGround = wcomY - terrainY
 
-					local threshold = (selectedIndex == 1) and 0.75 or math.huge
-					local ttg = timeToGround({ wcomX, wcomY, wcomZ }, { x, y, z }, { rotX, rotY, rotZ }, terrainY)
+					local rotX, rotY, rotZ = getAngularVelocity(v)
+					local angVelocity = MathUtil.vector3Length(rotX, rotY, rotZ)
 
-					if ttg < threshold then
+					whs.lastAngVel[v] = angVelocity
+
+					-- Ground Impact
+					if (comDistToGround < 0.5 and -vy > 0.5) then
 						if checkIsInRange(v) then
-							playSound(whs.samplesFall, wcomX, wcomY, wcomZ, selectedIndex)
-							setUserAttribute(v, "whs_hasFelled", "Boolean", true)
+							whs.playingSound[v] = playSound(whs.samplesGround, wcomX, wcomY, wcomZ)
 						end
 					end
-				end
 
-				-- Log vs Log Collision logic
-				for _, vv in pairs(whs.logs) do
-					if v ~= vv and entityExists(vv) then
-						local vx2, vy2, vz2 = getLinearVelocity(vv)
-						local relVel = MathUtil.vector3Length(vx - vx2, vy - vy2, vz - vz2)
+					-- Tree Falling
+					if getUserAttribute(v, "whs_hasFelled") ~= true then
+						local selectedIndex = getUserAttribute(v, "whs_fallIndex")
+						if selectedIndex == nil then
+							selectedIndex = math.random(1, #whs.samplesFall)
+							setUserAttribute(v, "whs_fallIndex", "Integer", selectedIndex)
+						end
 
-						if relVel > 0.4 then
-							local sizeX, sizeY, _   = getSplitShapeStats(v)
-							local sizeX2, sizeY2, _ = getSplitShapeStats(vv)
+						local threshold = (selectedIndex == 1) and 0.75 or 25
+						local ttg = timeToGround({ wcomX, wcomY, wcomZ }, { x, y, z }, { rotX, rotY, rotZ }, terrainY)
 
-							local halfLen1          = sizeX / 2
-							local halfLen2          = sizeX2 / 2
-							local combinedRadius    = (sizeY + sizeY2) / 2
+						if ttg < threshold then
+							if checkIsInRange(v) then
+								whs.playingSound[v] = playSound(whs.samplesFall, wcomX, wcomY, wcomZ, selectedIndex)
+								setUserAttribute(v, "whs_hasFelled", "Boolean", true)
+							end
+						end
+					end
 
-							local v_start           = { localToWorld(v, 0, -halfLen1, 0) }
-							local v_end             = { localToWorld(v, 0, halfLen1, 0) }
-							local vv_start          = { localToWorld(vv, 0, -halfLen2, 0) }
-							local vv_end            = { localToWorld(vv, 0, halfLen2, 0) }
+					-- Log vs Log Collision logic
+					for _, vv in pairs(whs.logs) do
+						if v ~= vv and entityExists(vv) then
+							local vx2, vy2, vz2 = getLinearVelocity(vv)
+							local relVel = MathUtil.vector3Length(vx - vx2, vy - vy2, vz - vz2)
 
-							local dist              = closestDistBetweenSegments(v_start, v_end, vv_start, vv_end)
+							if relVel > 0.4 then
+								local sizeX, sizeY, _   = getSplitShapeStats(v)
+								local sizeX2, sizeY2, _ = getSplitShapeStats(vv)
 
-							if dist < combinedRadius then
-								if checkIsInRange(v) and not whs.isLogsPlaying then
-									playSound(whs.samplesLogs, x, y, z)
+								local halfLen1          = sizeX / 2
+								local halfLen2          = sizeX2 / 2
+								local combinedRadius    = (sizeY + sizeY2) / 2
+
+								local v_start           = { localToWorld(v, 0, -halfLen1, 0) }
+								local v_end             = { localToWorld(v, 0, halfLen1, 0) }
+								local vv_start          = { localToWorld(vv, 0, -halfLen2, 0) }
+								local vv_end            = { localToWorld(vv, 0, halfLen2, 0) }
+
+								local dist              = closestDistBetweenSegments(v_start, v_end, vv_start, vv_end)
+
+								if dist < combinedRadius then
+									if checkIsInRange(v) and not whs.isLogsPlaying then
+										whs.playingSound[v] = playSound(whs.samplesLogs, x, y, z)
+									end
 								end
 							end
 						end
 					end
 				end
+			else
+				whs.logs[logId] = nil
 			end
-		else
-			whs.logs[logId] = nil
-		end
+		until true
 	end
 end
 
