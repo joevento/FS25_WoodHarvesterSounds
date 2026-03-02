@@ -199,12 +199,16 @@ function WoodHarvesterSound:update(dt)
 					-- Tree Falling
 					if getUserAttribute(v, "whs_hasFelled") ~= true then
 						local selectedIndex = getUserAttribute(v, "whs_fallIndex")
+						local sizeX, _, _   = getSplitShapeStats(v)
+						if sizeX < 12 then
+							selectedIndex = 1
+						end
 						if selectedIndex == nil then
 							selectedIndex = math.random(1, #whs.samplesFall)
 							setUserAttribute(v, "whs_fallIndex", "Integer", selectedIndex)
 						end
 
-						local threshold = (selectedIndex == 1) and 0.75 or 25
+						local threshold = (selectedIndex == 1) and 0.8 or 25
 						local ttg = timeToGround({ wcomX, wcomY, wcomZ }, { x, y, z }, { rotX, rotY, rotZ }, terrainY)
 
 						if ttg < threshold then
