@@ -15,7 +15,7 @@ function WoodHarvesterSound:loadMap(filename)
 	whs.searchRadius = 1000
 	whs.isLogsPlaying = false
 
-	local xmlPath = Utils.getFilename("sounds/woodHarvesterSounds.xml", modDir)
+	local xmlPath = Utils.getFilename("Sounds/woodHarvesterSounds.xml", modDir)
 	local xmlFile = loadXMLFile("WoodHarvesterSoundXML", xmlPath)
 
 	if xmlFile ~= nil and xmlFile ~= 0 then
