@@ -12,7 +12,7 @@ function WoodHarvesterSound:loadMap(filename)
 	whs.currentScanFound = {}
 	whs.playingSound = {}
 	whs.timer = 0
-	whs.searchRadius = 1000
+	whs.searchRadius = 75
 	whs.isLogsPlaying = false
 
 	local xmlPath = Utils.getFilename("Sounds/woodHarvesterSounds.xml", modDir)
@@ -117,10 +117,19 @@ local function playSound(samples, x, y, z, override)
 end
 
 local function getPlayerPos()
-	if g_localPlayer ~= nil and g_localPlayer.rootNode ~= 0 then
-		return getWorldTranslation(g_localPlayer.rootNode)
-	end
-	return nil, nil, nil
+    if g_localPlayer ~= nil then
+        local vehicle = g_localPlayer:getCurrentVehicle()
+        if vehicle ~= nil and vehicle.rootNode ~= nil and vehicle.rootNode ~= 0 then
+            return getWorldTranslation(vehicle.rootNode)
+        end
+        if g_localPlayer.rootNode ~= nil and g_localPlayer.rootNode ~= 0 then
+            local x, y, z = getWorldTranslation(g_localPlayer.rootNode)
+            if y > -100 then
+                return x, y, z
+            end
+        end
+    end
+    return nil, nil, nil
 end
 
 local function checkIsInRange(node)
@@ -132,6 +141,166 @@ local function checkIsInRange(node)
 	end
 
 	return false
+end
+
+local function buildLogEntries(logs)
+	local entries = {}
+	for logId, v in pairs(logs) do
+		if v ~= nil and entityExists(v) then
+			local sizeX, sizeY, _, _, _ = getSplitShapeStats(v)
+			local cylRadius             = sizeY * 0.5
+			local halfLen               = sizeX * 0.5
+			local comX, comY, comZ      = getCenterOfMass(v)
+			local wcx, wcy, wcz         = localToWorld(v, comX, comY, comZ)
+			local dx, dy, dz            = localDirectionToWorld(v, 0, 1, 0)
+			local ox, oy, oz            = wcx - dx * halfLen, wcy - dy * halfLen, wcz - dz * halfLen
+			local ex, ey, ez            = wcx + dx * halfLen, wcy + dy * halfLen, wcz + dz * halfLen
+			local bsr                   = math.sqrt(halfLen * halfLen + cylRadius * cylRadius)
+			local lvx, lvy, lvz         = getLinearVelocity(v)
+			entries[#entries + 1] = {
+				id      = logId,
+				v       = v,
+				cx      = wcx,   cy  = wcy,    cz  = wcz,
+				r       = bsr,
+				halfLen = halfLen,
+				radius  = cylRadius,
+				sx      = ox,    sy  = oy,     sz  = oz,
+				ex      = ex,    ey  = ey,     ez  = ez,
+				lvx     = lvx,   lvy = lvy,    lvz = lvz,
+			}
+		end
+	end
+	return entries
+end
+
+local function buildBVHNode(entries)
+	if #entries == 0 then return nil end
+
+	if #entries <= 6 then
+		local cx, cy, cz = 0, 0, 0
+		for _, e in ipairs(entries) do
+			cx = cx + e.cx
+			cy = cy + e.cy
+			cz = cz + e.cz
+		end
+		cx = cx / #entries
+		cy = cy / #entries
+		cz = cz / #entries
+		local r = 0
+		for _, e in ipairs(entries) do
+			local dx = e.cx - cx
+			local dy = e.cy - cy
+			local dz = e.cz - cz
+			local d  = math.sqrt(dx * dx + dy * dy + dz * dz) + e.r
+			if d > r then r = d end
+		end
+		return { leaf = true, entries = entries, cx = cx, cy = cy, cz = cz, r = r }
+	end
+
+	local minX, minY, minZ = math.huge, math.huge, math.huge
+	local maxX, maxY, maxZ = -math.huge, -math.huge, -math.huge
+	for _, e in ipairs(entries) do
+		if e.cx < minX then minX = e.cx end
+		if e.cx > maxX then maxX = e.cx end
+		if e.cy < minY then minY = e.cy end
+		if e.cy > maxY then maxY = e.cy end
+		if e.cz < minZ then minZ = e.cz end
+		if e.cz > maxZ then maxZ = e.cz end
+	end
+
+	local dx = maxX - minX
+	local dy = maxY - minY
+	local dz = maxZ - minZ
+	local axis
+	if dx >= dy and dx >= dz then
+		axis = "cx"
+	elseif dy >= dz then
+		axis = "cy"
+	else
+		axis = "cz"
+	end
+
+	table.sort(entries, function(a, b) return a[axis] < b[axis] end)
+
+	local mid   = math.floor(#entries / 2)
+	local left  = {}
+	local right = {}
+	for i = 1, mid do left[#left + 1] = entries[i] end
+	for i = mid + 1, #entries do right[#right + 1] = entries[i] end
+
+	local ncx = (minX + maxX) * 0.5
+	local ncy = (minY + maxY) * 0.5
+	local ncz = (minZ + maxZ) * 0.5
+	local nr  = 0
+	for _, e in ipairs(entries) do
+		local ddx = e.cx - ncx
+		local ddy = e.cy - ncy
+		local ddz = e.cz - ncz
+		local d   = math.sqrt(ddx * ddx + ddy * ddy + ddz * ddz) + e.r
+		if d > nr then nr = d end
+	end
+
+	return {
+		leaf = false,
+		cx = ncx,
+		cy = ncy,
+		cz = ncz,
+		r = nr,
+		left  = buildBVHNode(left),
+		right = buildBVHNode(right),
+	}
+end
+
+local function queryBVHPairs(nodeA, nodeB, pairs)
+	if nodeA == nil or nodeB == nil then return end
+
+	local ddx    = nodeA.cx - nodeB.cx
+	local ddy    = nodeA.cy - nodeB.cy
+	local ddz    = nodeA.cz - nodeB.cz
+	local distSq = ddx * ddx + ddy * ddy + ddz * ddz
+	local rSum   = nodeA.r + nodeB.r
+	if distSq > rSum * rSum then return end
+
+	if nodeA.leaf and nodeB.leaf then
+		for _, ea in ipairs(nodeA.entries) do
+			for _, eb in ipairs(nodeB.entries) do
+				if ea.id < eb.id then
+					pairs[#pairs + 1] = { ea, eb }
+				end
+			end
+		end
+		return
+	end
+
+	if nodeA.leaf then
+		queryBVHPairs(nodeA, nodeB.left, pairs)
+		queryBVHPairs(nodeA, nodeB.right, pairs)
+	elseif nodeB.leaf then
+		queryBVHPairs(nodeA.left, nodeB, pairs)
+		queryBVHPairs(nodeA.right, nodeB, pairs)
+	else
+		queryBVHPairs(nodeA.left, nodeB.left, pairs)
+		queryBVHPairs(nodeA.left, nodeB.right, pairs)
+		queryBVHPairs(nodeA.right, nodeB.left, pairs)
+		queryBVHPairs(nodeA.right, nodeB.right, pairs)
+	end
+end
+
+local function querySelfPairs(node, pairs)
+	if node == nil or node.leaf then
+		if node ~= nil then
+			local entries = node.entries
+			for i = 1, #entries do
+				for j = i + 1, #entries do
+					pairs[#pairs + 1] = { entries[i], entries[j] }
+				end
+			end
+		end
+		return
+	end
+	queryBVHPairs(node.left, node.right, pairs)
+	querySelfPairs(node.left, pairs)
+	querySelfPairs(node.right, pairs)
 end
 
 function WoodHarvesterSound:update(dt)
@@ -218,41 +387,48 @@ function WoodHarvesterSound:update(dt)
 							end
 						end
 					end
-
-					-- Log vs Log Collision logic
-					for _, vv in pairs(whs.logs) do
-						if v ~= vv and entityExists(vv) then
-							local vx2, vy2, vz2 = getLinearVelocity(vv)
-							local relVel = MathUtil.vector3Length(vx - vx2, vy - vy2, vz - vz2)
-
-							if relVel > 0.4 then
-								local sizeX, sizeY, _   = getSplitShapeStats(v)
-								local sizeX2, sizeY2, _ = getSplitShapeStats(vv)
-
-								local halfLen1          = sizeX / 2
-								local halfLen2          = sizeX2 / 2
-								local combinedRadius    = (sizeY + sizeY2) / 2
-
-								local v_start           = { localToWorld(v, 0, -halfLen1, 0) }
-								local v_end             = { localToWorld(v, 0, halfLen1, 0) }
-								local vv_start          = { localToWorld(vv, 0, -halfLen2, 0) }
-								local vv_end            = { localToWorld(vv, 0, halfLen2, 0) }
-
-								local dist              = closestDistBetweenSegments(v_start, v_end, vv_start, vv_end)
-
-								if dist < combinedRadius then
-									if checkIsInRange(v) and not whs.isLogsPlaying then
-										whs.playingSound[v] = playSound(whs.samplesLogs, x, y, z)
-									end
-								end
-							end
-						end
-					end
 				end
 			else
 				whs.logs[logId] = nil
 			end
 		until true
+	end
+
+	-- Log vs Log Collision logic
+	local entries = buildLogEntries(whs.logs)
+	if #entries > 1 then
+		local bvh   = buildBVHNode(entries)
+		local pairs = {}
+		querySelfPairs(bvh, pairs)
+
+		for _, pair in ipairs(pairs) do
+			local ea = pair[1]
+			local eb = pair[2]
+			local v  = ea.v
+
+			if whs.playingSound[v] == nil or not g_soundManager:getIsSamplePlaying(whs.playingSound[v]) then
+				local relVel = MathUtil.vector3Length(
+					ea.lvx - eb.lvx,
+					ea.lvy - eb.lvy,
+					ea.lvz - eb.lvz
+				)
+
+				if relVel > 0.3 then
+					local combinedRadius = ea.radius + eb.radius
+
+					local dist = closestDistBetweenSegments(
+						{ ea.sx, ea.sy, ea.sz }, { ea.ex, ea.ey, ea.ez },
+						{ eb.sx, eb.sy, eb.sz }, { eb.ex, eb.ey, eb.ez }
+					)
+
+					if dist < combinedRadius then
+						if checkIsInRange(v) and not whs.isLogsPlaying then
+							whs.playingSound[v] = playSound(whs.samplesLogs, ea.cx, ea.cy, ea.cz)
+						end
+					end
+				end
+			end
+		end
 	end
 end
 
