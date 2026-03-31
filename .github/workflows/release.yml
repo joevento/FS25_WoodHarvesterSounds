@@ -35,7 +35,7 @@ jobs:
       - name: Create Zip Archive
         if: steps.check_version.outputs.changed == 'true'
         run: |
-          zip -r FS25_WoodHarvesterSounds.zip WoodHarvesterSound.lua Register.lua modDesc.xml icon.dds Sounds/
+          zip -r FS25_WoodHarvesterSounds.zip WoodHarvesterSound.lua Register.lua modDesc.xml icon_WHS.dds Sounds/
           
       - name: Create GitHub Release
         if: steps.check_version.outputs.changed == 'true'

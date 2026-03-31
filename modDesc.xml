@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <modDesc descVersion="105">
 	<author>DicoFlower8890</author>
-	<version>0.3.0.0</version>
+	<version>0.3.0.1</version>
 	<title>
 		<en>Wood Harvester Sounds</en>
 	</title>
 	<description>
 		<en><![CDATA[This mod plays sounds when you are handeling trees and logs.]]></en>
 	</description>
-	<iconFilename>icon.dds</iconFilename>
+	<iconFilename>icon_WHS.dds</iconFilename>
 	<multiplayer supported="true"/>
 	<extraSourceFiles>
 		<sourceFile filename="WoodHarvesterSound.lua" />
