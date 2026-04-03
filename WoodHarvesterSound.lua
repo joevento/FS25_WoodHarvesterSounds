@@ -410,14 +410,14 @@ function WoodHarvesterSound:update(dt)
 			local eb = pair[2]
 			local v  = ea.v
 
-			if whs.playingSound[v] == nil or not g_soundManager:getIsSamplePlaying(whs.playingSound[v]) then
+			if (whs.playingSound[v] == nil or not g_soundManager:getIsSamplePlaying(whs.playingSound[v])) and math.random() < 0.5 then
 				local relVel = MathUtil.vector3Length(
 					ea.lvx - eb.lvx,
 					ea.lvy - eb.lvy,
 					ea.lvz - eb.lvz
 				)
 
-				if relVel > 0.3 then
+				if relVel > 0.5 then
 					local combinedRadius = ea.radius + eb.radius
 
 					local dist = closestDistBetweenSegments(
