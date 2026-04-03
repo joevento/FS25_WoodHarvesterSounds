@@ -88,6 +88,7 @@ local function releaseSoundNodes()
 end
 
 local function playSound(samples, x, y, z, override)
+	local factor = g_soundMixer.volumeFactors[3] --environment
 	if samples == nil or #samples == 0 then return end
 
 	local entry = acquireSoundNode()
@@ -111,6 +112,7 @@ local function playSound(samples, x, y, z, override)
 	pitch = pitch + (math.random() * 0.4 - 0.2)
 	--Doesn't seem to actually change it tho, giants problem?
 	g_soundManager:setSamplePitch(sample, pitch)
+	g_soundManager:setSampleVolume(sample, factor)
 	g_soundManager:playSample(sample)
 	entry.sample = sample
 	return sample
@@ -305,7 +307,7 @@ end
 
 local function isHorizontal(id)
 	local rx, _, rz = getWorldRotation(id)
-	return (math.abs(math.cos(rx) * math.cos(rz)) < 0.95)
+	return (math.abs(math.cos(rx) * math.cos(rz)) < 0.75)
 end
 
 function WoodHarvesterSound:update(dt)
@@ -381,13 +383,12 @@ function WoodHarvesterSound:update(dt)
 							selectedIndex = math.random(1, #whs.samplesFall)
 						end
 
-						local threshold = (selectedIndex == 1) and 0.8 or 25
+						local threshold = (selectedIndex == 1) and 1 or 25
 						local ttg = timeToGround({ wcomX, wcomY, wcomZ }, { x, y, z }, { rotX, rotY, rotZ }, terrainY)
 
 						if ttg < threshold then
 							if checkIsInRange(v) then
 								whs.playingSound[v] = playSound(whs.samplesFall, wcomX, wcomY, wcomZ, selectedIndex)
-								setUserAttribute(v, "whs_hasFelled", "Boolean", true)
 							end
 						end
 					end

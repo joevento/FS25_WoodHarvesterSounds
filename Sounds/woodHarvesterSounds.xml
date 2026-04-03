@@ -11,11 +11,6 @@
 			<pitch indoor="0.9" outdoor="0.9" />
 			<lowpassGain indoor="0.50" outdoor="1.00" />
 		</logs>
-		<logs file="Sounds/logs06.ogg" innerRadius="5.0" outerRadius="80.0">
-			<volume indoor="2" outdoor="5.00" />
-			<pitch indoor="0.95" outdoor="0.95" />
-			<lowpassGain indoor="0.50" outdoor="1.00" />
-		</logs>
 		<logs file="Sounds/logs01.ogg" innerRadius="5.0" outerRadius="80.0">
 			<volume indoor="2" outdoor="4.00" />
 			<pitch indoor="0.85" outdoor="0.85" />
