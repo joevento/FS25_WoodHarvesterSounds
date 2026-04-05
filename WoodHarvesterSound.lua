@@ -406,8 +406,8 @@ function WoodHarvesterSound:update(dt)
 		local logPairs = {}
 		querySelfPairs(bvh, logPairs)
 
-		local skip = false
 		for _, pair in ipairs(logPairs) do
+			local skip = false
 			local ea = pair[1]
 			local eb = pair[2]
 

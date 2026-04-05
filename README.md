@@ -1,5 +1,5 @@
 # Wood Harvester Sound Mod
-<i>Current version 0.3.3.0</i>
+<i>Current version 0.3.3.1</i>
 
 This mod plays sounds when you are handeling trees and logs.
 
