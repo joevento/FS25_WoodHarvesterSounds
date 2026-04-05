@@ -403,39 +403,53 @@ function WoodHarvesterSound:update(dt)
 	local entries = buildLogEntries(whs.logs)
 	if #entries > 1 then
 		local bvh   = buildBVHNode(entries)
-		local pairs = {}
-		querySelfPairs(bvh, pairs)
+		local logPairs = {}
+		querySelfPairs(bvh, logPairs)
 
-		for _, pair in ipairs(pairs) do
+		local skip = false
+		for _, pair in ipairs(logPairs) do
 			local ea = pair[1]
 			local eb = pair[2]
-			local v  = ea.v
 
-			if (whs.playingSound[v] == nil or not g_soundManager:getIsSamplePlaying(whs.playingSound[v])) and math.random() < 0.5 then
-				local relVel = MathUtil.vector3Length(
-					ea.lvx - eb.lvx,
-					ea.lvy - eb.lvy,
-					ea.lvz - eb.lvz
-				)
+			local vehicle = g_localPlayer:getCurrentVehicle()
+			if vehicle ~= nil and vehicle.spec_logGrab then
+				local spec = vehicle.spec_logGrab
+				for _, grab in ipairs(spec.grabs) do
+					for shapeId, _ in pairs(grab.dynamicMountedShapes) do
+						if shapeId == ea.v or shapeId == eb.v then
+							skip = true
+						end
+					end
+				end
+			end
+			local v = ea.v
+			if not skip then
+				if (whs.playingSound[v] == nil or not g_soundManager:getIsSamplePlaying(whs.playingSound[v])) and math.random() < 0.5 then
+					local relVel = MathUtil.vector3Length(
+						ea.lvx - eb.lvx,
+						ea.lvy - eb.lvy,
+						ea.lvz - eb.lvz
+						)
 
-				if relVel > 0.5 then
-					local combinedRadius = ea.radius + eb.radius
+						if relVel > 0.5 then
+							local combinedRadius = ea.radius + eb.radius
 
-					local dist = closestDistBetweenSegments(
-						{ ea.sx, ea.sy, ea.sz }, { ea.ex, ea.ey, ea.ez },
-						{ eb.sx, eb.sy, eb.sz }, { eb.ex, eb.ey, eb.ez }
-					)
+							local dist = closestDistBetweenSegments(
+								{ ea.sx, ea.sy, ea.sz }, { ea.ex, ea.ey, ea.ez },
+								{ eb.sx, eb.sy, eb.sz }, { eb.ex, eb.ey, eb.ez }
+								)
 
-					if dist < combinedRadius then
-						if checkIsInRange(v) and not whs.isLogsPlaying then
-							whs.playingSound[v] = playSound(whs.samplesLogs, ea.cx, ea.cy, ea.cz)
+								if dist < combinedRadius then
+									if checkIsInRange(v) and not whs.isLogsPlaying then
+										whs.playingSound[v] = playSound(whs.samplesLogs, ea.cx, ea.cy, ea.cz)
+									end
+								end
+							end
 						end
 					end
 				end
 			end
 		end
-	end
-end
 
 function timeToGround(com, pivot, angularVel, terrainHeight)
 	local rx = com[1] - pivot[1]
