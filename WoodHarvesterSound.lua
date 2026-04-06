@@ -340,6 +340,7 @@ function WoodHarvesterSound:update(dt)
 			end
 		end
 	end
+	local vehicle = g_localPlayer:getCurrentVehicle()
 
 	for logId, v in pairs(whs.logs) do
 		repeat
@@ -373,22 +374,24 @@ function WoodHarvesterSound:update(dt)
 					end
 
 					-- Tree Falling
-					if not isHorizontal(v) then
-						local selectedIndex = nil
-						local sizeX, _, _   = getSplitShapeStats(v)
-						if sizeX < 12 then
-							selectedIndex = 1
-						end
-						if selectedIndex == nil then
-							selectedIndex = math.random(1, #whs.samplesFall)
-						end
+					if vehicle ~= nil and vehicle.spec_woodHarvester then
+						if not isHorizontal(v) and vehicle.spec_woodHarvester.hasAttachedSplitShape then
+							local selectedIndex = nil
+							local sizeX, _, _   = getSplitShapeStats(v)
+							if sizeX < 12 then
+								selectedIndex = 1
+							end
+							if selectedIndex == nil then
+								selectedIndex = math.random(1, #whs.samplesFall)
+							end
 
-						local threshold = (selectedIndex == 1) and 1 or 25
-						local ttg = timeToGround({ wcomX, wcomY, wcomZ }, { x, y, z }, { rotX, rotY, rotZ }, terrainY)
+							local threshold = (selectedIndex == 1) and 1 or 25
+							local ttg = timeToGround({ wcomX, wcomY, wcomZ }, { x, y, z }, { rotX, rotY, rotZ }, terrainY)
 
-						if ttg < threshold then
-							if checkIsInRange(v) then
-								whs.playingSound[v] = playSound(whs.samplesFall, wcomX, wcomY, wcomZ, selectedIndex)
+							if ttg < threshold then
+								if checkIsInRange(v) then
+									whs.playingSound[v] = playSound(whs.samplesFall, wcomX, wcomY, wcomZ, selectedIndex)
+								end
 							end
 						end
 					end
@@ -411,7 +414,6 @@ function WoodHarvesterSound:update(dt)
 			local ea = pair[1]
 			local eb = pair[2]
 
-			local vehicle = g_localPlayer:getCurrentVehicle()
 			if vehicle ~= nil and vehicle.spec_logGrab then
 				local spec = vehicle.spec_logGrab
 				for _, grab in ipairs(spec.grabs) do
