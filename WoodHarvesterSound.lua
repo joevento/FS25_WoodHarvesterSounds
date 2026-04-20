@@ -424,6 +424,11 @@ function WoodHarvesterSound:update(dt)
 					end
 				end
 			end
+
+			if getUserAttribute(ea.id, "isTensionBeltMounted") and getUserAttribute(eb.id, "isTensionBeltMounted") == true then
+				skip = true
+			end
+
 			local v = ea.v
 			if not skip then
 				if (whs.playingSound[v] == nil or not g_soundManager:getIsSamplePlaying(whs.playingSound[v])) and math.random() < 0.5 then
