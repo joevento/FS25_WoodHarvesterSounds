@@ -14,6 +14,9 @@ function WoodHarvesterSound:loadMap(filename)
 	whs.timer = 0
 	whs.searchRadius = 75
 	whs.isLogsPlaying = false
+	whs.bvhDirty = true
+	whs.cachedEntries = {}
+	whs.cachedBVH = nil
 
 	local xmlPath = Utils.getFilename("Sounds/woodHarvesterSounds.xml", modDir)
 	local xmlFile = loadXMLFile("WoodHarvesterSoundXML", xmlPath)
@@ -337,6 +340,7 @@ function WoodHarvesterSound:update(dt)
 		for logId in pairs(whs.logs) do
 			if not whs.currentScanFound[logId] then
 				whs.logs[logId] = nil
+				whs.bvhDirty = true
 			end
 		end
 	end
@@ -398,16 +402,21 @@ function WoodHarvesterSound:update(dt)
 				end
 			else
 				whs.logs[logId] = nil
+				whs.bvhDirty = true
 			end
 		until true
 	end
 
 	-- Log vs Log Collision logic
-	local entries = buildLogEntries(whs.logs)
-	if #entries > 1 then
-		local bvh   = buildBVHNode(entries)
+	if whs.bvhDirty then
+		whs.cachedEntries = buildLogEntries(whs.logs)
+		whs.cachedBVH = #whs.cachedEntries > 1 and buildBVHNode(whs.cachedEntries) or nil
+		whs.bvhDirty = false
+	end
+
+	if whs.cachedBVH ~= nil then
 		local logPairs = {}
-		querySelfPairs(bvh, logPairs)
+		querySelfPairs(whs.cachedBVH, logPairs)
 
 		for _, pair in ipairs(logPairs) do
 			local skip = false
@@ -478,6 +487,9 @@ function WoodHarvesterSound:collisionTestCallback(otherId)
 	if otherId ~= 0 then
 		if getRigidBodyType(otherId) == RigidBodyType.DYNAMIC and getSplitType(otherId) ~= 0 then
 			whs.currentScanFound[otherId] = true
+			if whs.logs[otherId] == nil then
+				whs.bvhDirty = true
+			end
 			whs.logs[otherId] = otherId
 		end
 	end
