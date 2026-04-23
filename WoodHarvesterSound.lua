@@ -514,14 +514,20 @@ function WoodHarvesterSound:collisionTestCallback(otherId)
 	end
 end
 
-function closestDistBetweenSegments(p1, p2, p3, p4)
-	local d1 = { p2[1] - p1[1], p2[2] - p1[2], p2[3] - p1[3] }
-	local d2 = { p4[1] - p3[1], p4[2] - p3[2], p4[3] - p3[3] }
-	local r  = { p1[1] - p3[1], p1[2] - p3[2], p1[3] - p3[3] }
+local _d1 = { 0, 0, 0 }
+local _d2 = { 0, 0, 0 }
+local _r  = { 0, 0, 0 }
+local _c1 = { 0, 0, 0 }
+local _c2 = { 0, 0, 0 }
 
-	local a  = MathUtil.dotProduct(d1[1], d1[2], d1[3], d1[1], d1[2], d1[3])
-	local e  = MathUtil.dotProduct(d2[1], d2[2], d2[3], d2[1], d2[2], d2[3])
-	local f  = MathUtil.dotProduct(d2[1], d2[2], d2[3], r[1], r[2], r[3])
+function closestDistBetweenSegments(p1, p2, p3, p4)
+	_d1[1] = p2[1] - p1[1]; _d1[2] = p2[2] - p1[2]; _d1[3] = p2[3] - p1[3]
+	_d2[1] = p4[1] - p3[1]; _d2[2] = p4[2] - p3[2]; _d2[3] = p4[3] - p3[3]
+	_r[1]  = p1[1] - p3[1]; _r[2]  = p1[2] - p3[2]; _r[3]  = p1[3] - p3[3]
+
+	local a  = MathUtil.dotProduct(_d1[1], _d1[2], _d1[3], _d1[1], _d1[2], _d1[3])
+	local e  = MathUtil.dotProduct(_d2[1], _d2[2], _d2[3], _d2[1], _d2[2], _d2[3])
+	local f  = MathUtil.dotProduct(_d2[1], _d2[2], _d2[3], _r[1],  _r[2],  _r[3])
 
 	local s, t
 	if a <= 1e-10 and e <= 1e-10 then
@@ -529,12 +535,12 @@ function closestDistBetweenSegments(p1, p2, p3, p4)
 	elseif a <= 1e-10 then
 		s, t = 0, math.max(0, math.min(f / e, 1))
 	else
-		local c = MathUtil.dotProduct(d1[1], d1[2], d1[3], r[1], r[2], r[3])
+		local c = MathUtil.dotProduct(_d1[1], _d1[2], _d1[3], _r[1], _r[2], _r[3])
 		if e <= 1e-10 then
 			t = 0
 			s = math.max(0, math.min(-c / a, 1))
 		else
-			local b = MathUtil.dotProduct(d1[1], d1[2], d1[3], d2[1], d2[2], d2[3])
+			local b = MathUtil.dotProduct(_d1[1], _d1[2], _d1[3], _d2[1], _d2[2], _d2[3])
 			local denom = a * e - b * b
 			if denom ~= 0 then
 				s = math.max(0, math.min((b * f - c * e) / denom, 1))
@@ -552,9 +558,9 @@ function closestDistBetweenSegments(p1, p2, p3, p4)
 		end
 	end
 
-	local c1 = { p1[1] + d1[1] * s, p1[2] + d1[2] * s, p1[3] + d1[3] * s }
-	local c2 = { p3[1] + d2[1] * t, p3[2] + d2[2] * t, p3[3] + d2[3] * t }
-	return MathUtil.vector3Length(c1[1] - c2[1], c1[2] - c2[2], c1[3] - c2[3])
+	_c1[1] = p1[1] + _d1[1] * s; _c1[2] = p1[2] + _d1[2] * s; _c1[3] = p1[3] + _d1[3] * s
+	_c2[1] = p3[1] + _d2[1] * t; _c2[2] = p3[2] + _d2[2] * t; _c2[3] = p3[3] + _d2[3] * t
+	return MathUtil.vector3Length(_c1[1] - _c2[1], _c1[2] - _c2[2], _c1[3] - _c2[3])
 end
 
 addModEventListener(WoodHarvesterSound)
