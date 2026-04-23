@@ -18,6 +18,9 @@ function WoodHarvesterSound:loadMap(filename)
 	whs.cachedEntries = {}
 	whs.cachedBVH = nil
 	whs.entryCache = {}
+	whs.playerX = 0
+	whs.playerY = 0
+	whs.playerZ = 0
 
 	local xmlPath = Utils.getFilename("Sounds/woodHarvesterSounds.xml", modDir)
 	local xmlFile = loadXMLFile("WoodHarvesterSoundXML", xmlPath)
@@ -139,10 +142,9 @@ local function getPlayerPos()
 end
 
 local function checkIsInRange(node)
-	local tx, ty, tz = getPlayerPos()
-	if tx ~= nil and node ~= nil and entityExists(node) then
+	if whs.playerX ~= nil and node ~= nil and entityExists(node) then
 		local x2, y2, z2 = getWorldTranslation(node)
-		local dist = MathUtil.vector3Length(tx - x2, ty - y2, tz - z2)
+		local dist = MathUtil.vector3Length(whs.playerX - x2, whs.playerY - y2, whs.playerZ - z2)
 		return dist < whs.searchRadius
 	end
 
@@ -337,15 +339,15 @@ function WoodHarvesterSound:update(dt)
 	end
 	whs.timer = 0
 
-	local px, py, pz = getPlayerPos()
-	if px == nil then
+	whs.playerX, whs.playerY, whs.playerZ = getPlayerPos()
+	if whs.playerX == nil then
 		return
 	end
 
 	whs.currentScanFound = {}
 
 	local mask = 2048 + 262144 + 16777216
-	overlapSphere(px, py, pz, whs.searchRadius, "collisionTestCallback", self, mask, true, false, true, false)
+	overlapSphere(whs.playerX, whs.playerY, whs.playerZ, whs.searchRadius, "collisionTestCallback", self, mask, true, false, true, false)
 
 	if next(whs.currentScanFound) ~= nil then
 		for logId in pairs(whs.logs) do
