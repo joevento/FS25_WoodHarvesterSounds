@@ -130,16 +130,16 @@ local function getPlayerPos()
     if g_localPlayer ~= nil then
         local vehicle = g_localPlayer:getCurrentVehicle()
         if vehicle ~= nil and vehicle.rootNode ~= nil and vehicle.rootNode ~= 0 then
-            return getWorldTranslation(vehicle.rootNode)
+            return getWorldTranslation(vehicle.rootNode), vehicle
         end
         if g_localPlayer.rootNode ~= nil and g_localPlayer.rootNode ~= 0 then
             local x, y, z = getWorldTranslation(g_localPlayer.rootNode)
             if y > -100 then
-                return x, y, z
+                return x, y, z, nil
             end
         end
     end
-    return nil, nil, nil
+    return nil, nil, nil, nil
 end
 
 local function checkIsInRange(node)
@@ -355,7 +355,8 @@ function WoodHarvesterSound:update(dt)
 	end
 	whs.timer = 0
 
-	whs.playerX, whs.playerY, whs.playerZ = getPlayerPos()
+	local vehicle
+	whs.playerX, whs.playerY, whs.playerZ, vehicle = getPlayerPos()
 	if whs.playerX == nil then
 		return
 	end
@@ -373,7 +374,6 @@ function WoodHarvesterSound:update(dt)
 			end
 		end
 	end
-	local vehicle = g_localPlayer:getCurrentVehicle()
 
 	for logId, v in pairs(whs.logs) do
 		repeat
