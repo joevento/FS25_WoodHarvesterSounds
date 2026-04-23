@@ -270,6 +270,21 @@ local function buildBVHNode(entries)
 	}
 end
 
+local _pairPool  = {}
+local _pairCount = 0
+
+local function acquirePair(ea, eb)
+	_pairCount = _pairCount + 1
+	local p = _pairPool[_pairCount]
+	if p == nil then
+		_pairPool[_pairCount] = { ea, eb }
+	else
+		p[1] = ea
+		p[2] = eb
+	end
+	return _pairPool[_pairCount]
+end
+
 local function queryBVHPairs(nodeA, nodeB, pairs)
 	if nodeA == nil or nodeB == nil then return end
 
@@ -284,7 +299,7 @@ local function queryBVHPairs(nodeA, nodeB, pairs)
 		for _, ea in ipairs(nodeA.entries) do
 			for _, eb in ipairs(nodeB.entries) do
 				if ea.id < eb.id then
-					pairs[#pairs + 1] = { ea, eb }
+					pairs[#pairs + 1] = acquirePair(ea, eb)
 				end
 			end
 		end
@@ -435,6 +450,7 @@ function WoodHarvesterSound:update(dt)
 			logPairs[i] = nil
 		end
 
+		_pairCount = 0
 		querySelfPairs(whs.cachedBVH, logPairs)
 
 		for _, pair in ipairs(logPairs) do
