@@ -21,6 +21,7 @@ function WoodHarvesterSound:loadMap(filename)
 	whs.playerX = 0
 	whs.playerY = 0
 	whs.playerZ = 0
+	whs.logPairs = {}
 
 	local xmlPath = Utils.getFilename("Sounds/woodHarvesterSounds.xml", modDir)
 	local xmlFile = loadXMLFile("WoodHarvesterSoundXML", xmlPath)
@@ -430,7 +431,11 @@ function WoodHarvesterSound:update(dt)
 	end
 
 	if whs.cachedBVH ~= nil then
-		local logPairs = {}
+		local logPairs = whs.logPairs
+		for i = #logPairs, 1, -1 do
+			logPairs[i] = nil
+		end
+
 		querySelfPairs(whs.cachedBVH, logPairs)
 
 		for _, pair in ipairs(logPairs) do
