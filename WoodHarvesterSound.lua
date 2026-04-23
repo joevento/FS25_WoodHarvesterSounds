@@ -5,6 +5,9 @@ WoodHarvesterSound = {}
 WoodHarvesterSound.modDir = modDir
 
 local whs = {}
+local _pairPool  = {}
+local _pairCount = 0
+local _tensionBeltCache = {}
 
 function WoodHarvesterSound:loadMap(filename)
 	whs.logs = {}
@@ -270,9 +273,6 @@ local function buildBVHNode(entries)
 	}
 end
 
-local _pairPool  = {}
-local _pairCount = 0
-
 local function acquirePair(ea, eb)
 	_pairCount = _pairCount + 1
 	local p = _pairPool[_pairCount]
@@ -340,6 +340,15 @@ end
 local function isHorizontal(id)
 	local rx, _, rz = getWorldRotation(id)
 	return (math.abs(math.cos(rx) * math.cos(rz)) < 0.75)
+end
+
+local function isTensionBeltMounted(id)
+    local cached = _tensionBeltCache[id]
+    if cached == nil then
+        cached = getUserAttribute(id, "isTensionBeltMounted") == true
+        _tensionBeltCache[id] = cached
+    end
+    return cached
 end
 
 function WoodHarvesterSound:update(dt)
@@ -452,6 +461,9 @@ function WoodHarvesterSound:update(dt)
 
 		_pairCount = 0
 		querySelfPairs(whs.cachedBVH, logPairs)
+		for k in pairs(_tensionBeltCache) do
+			_tensionBeltCache[k] = nil
+		end
 
 		for _, pair in ipairs(logPairs) do
 			local skip = false
@@ -469,7 +481,7 @@ function WoodHarvesterSound:update(dt)
 				end
 			end
 
-			if getUserAttribute(ea.id, "isTensionBeltMounted") and getUserAttribute(eb.id, "isTensionBeltMounted") == true then
+			if isTensionBeltMounted(ea.id) and isTensionBeltMounted(eb.id) then
 				skip = true
 			end
 
