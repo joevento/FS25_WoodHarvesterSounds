@@ -347,8 +347,7 @@ function WoodHarvesterSound:update(dt)
 
 	whs.currentScanFound = {}
 
-	local mask = 2048 + 262144 + 16777216
-	overlapSphere(whs.playerX, whs.playerY, whs.playerZ, whs.searchRadius, "collisionTestCallback", self, mask, true, false, true, false)
+	overlapSphere(whs.playerX, whs.playerY, whs.playerZ, whs.searchRadius, "collisionTestCallback", self, 17041408, true, false, true, false)
 
 	if next(whs.currentScanFound) ~= nil then
 		for logId in pairs(whs.logs) do
