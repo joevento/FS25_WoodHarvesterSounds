@@ -17,6 +17,7 @@ function WoodHarvesterSound:loadMap(filename)
 	whs.bvhDirty = true
 	whs.cachedEntries = {}
 	whs.cachedBVH = nil
+	whs.entryCache = {}
 
 	local xmlPath = Utils.getFilename("Sounds/woodHarvesterSounds.xml", modDir)
 	local xmlFile = loadXMLFile("WoodHarvesterSoundXML", xmlPath)
@@ -152,27 +153,37 @@ local function buildLogEntries(logs)
 	local entries = {}
 	for logId, v in pairs(logs) do
 		if v ~= nil and entityExists(v) then
-			local sizeX, sizeY, _, _, _ = getSplitShapeStats(v)
-			local cylRadius             = sizeY * 0.5
-			local halfLen               = sizeX * 0.5
-			local comX, comY, comZ      = getCenterOfMass(v)
-			local wcx, wcy, wcz         = localToWorld(v, comX, comY, comZ)
-			local dx, dy, dz            = localDirectionToWorld(v, 0, 1, 0)
-			local ox, oy, oz            = wcx - dx * halfLen, wcy - dy * halfLen, wcz - dz * halfLen
-			local ex, ey, ez            = wcx + dx * halfLen, wcy + dy * halfLen, wcz + dz * halfLen
-			local bsr                   = math.sqrt(halfLen * halfLen + cylRadius * cylRadius)
-			local lvx, lvy, lvz         = getLinearVelocity(v)
-			entries[#entries + 1] = {
-				id      = logId,
-				v       = v,
-				cx      = wcx,   cy  = wcy,    cz  = wcz,
-				r       = bsr,
-				halfLen = halfLen,
-				radius  = cylRadius,
-				sx      = ox,    sy  = oy,     sz  = oz,
-				ex      = ex,    ey  = ey,     ez  = ez,
-				lvx     = lvx,   lvy = lvy,    lvz = lvz,
-			}
+			local lvx, lvy, lvz = getLinearVelocity(v)
+			local speedSq = lvx * lvx + lvy * lvy + lvz * lvz
+			local cached = whs.entryCache[logId]
+
+			if cached ~= nil and speedSq < 0.01 then
+				cached.lvx, cached.lvy, cached.lvz = lvx, lvy, lvz
+				entries[#entries + 1] = cached
+			else
+				local sizeX, sizeY, _, _, _ = getSplitShapeStats(v)
+				local cylRadius             = sizeY * 0.5
+				local halfLen               = sizeX * 0.5
+				local comX, comY, comZ      = getCenterOfMass(v)
+				local wcx, wcy, wcz         = localToWorld(v, comX, comY, comZ)
+				local dx, dy, dz            = localDirectionToWorld(v, 0, 1, 0)
+				local ox, oy, oz            = wcx - dx * halfLen, wcy - dy * halfLen, wcz - dz * halfLen
+				local ex, ey, ez            = wcx + dx * halfLen, wcy + dy * halfLen, wcz + dz * halfLen
+				local bsr                   = math.sqrt(halfLen * halfLen + cylRadius * cylRadius)
+				local entry = {
+					id      = logId,
+					v       = v,
+					cx      = wcx,   cy  = wcy,    cz  = wcz,
+					r       = bsr,
+					halfLen = halfLen,
+					radius  = cylRadius,
+					sx      = ox,    sy  = oy,     sz  = oz,
+					ex      = ex,    ey  = ey,     ez  = ez,
+					lvx     = lvx,   lvy = lvy,    lvz = lvz,
+				}
+				whs.entryCache[logId] = entry
+				entries[#entries + 1] = entry
+			end
 		end
 	end
 	return entries
@@ -340,6 +351,7 @@ function WoodHarvesterSound:update(dt)
 		for logId in pairs(whs.logs) do
 			if not whs.currentScanFound[logId] then
 				whs.logs[logId] = nil
+				whs.entryCache[logId] = nil
 				whs.bvhDirty = true
 			end
 		end
@@ -402,6 +414,7 @@ function WoodHarvesterSound:update(dt)
 				end
 			else
 				whs.logs[logId] = nil
+				whs.entryCache[logId] = nil
 				whs.bvhDirty = true
 			end
 		until true
