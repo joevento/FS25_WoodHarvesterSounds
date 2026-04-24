@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" standalone="no" ?>
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
 <modDesc descVersion="105">
 	<author>DicoFlower8890</author>
 	<version>0.3.5.0</version>
@@ -6,10 +6,25 @@
 		<en>Wood Harvester Sounds</en>
 	</title>
 	<description>
-		<en><![CDATA[This mod plays sounds when you are handeling trees and logs.]]></en>
+		<en><![CDATA[Does a tree make a sound if no one is around to hear it? With this mod, it certainly does! 
+Unique sounds are now triggered based on physical log interactions, bringing forestry work to life.
+
+Three sound events are covered: trees crashing down as they fall, 
+logs colliding against each other, and the thud of logs hitting 
+the ground.
+
+Sound Variety:
+- 6 Tree falling variations
+- 5 Log-on-log collision variations
+- 4 Log ground impact variations
+
+Originally designed for harvesters hence the name, but reimagined half way through to work globally in any machine.
+Even with heavy optimisation the mod can still cause small performance issues when there are hundreds of logs around.
+
+Issues & suggestions: https://github.com/joevento/FS25_WoodHarvesterSounds]]></en>
 	</description>
 	<iconFilename>icon_WHS.dds</iconFilename>
-	<multiplayer supported="true"/>
+	<multiplayer supported="true" />
 	<extraSourceFiles>
 		<sourceFile filename="WoodHarvesterSound.lua" />
 	</extraSourceFiles>
