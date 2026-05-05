@@ -133,7 +133,8 @@ local function getPlayerPos()
     if g_localPlayer ~= nil then
         local vehicle = g_localPlayer:getCurrentVehicle()
         if vehicle ~= nil and vehicle.rootNode ~= nil and vehicle.rootNode ~= 0 then
-            return getWorldTranslation(vehicle.rootNode), vehicle
+			local x, y, z = getWorldTranslation(vehicle.rootNode)
+            return x, y, z, vehicle
         end
         if g_localPlayer.rootNode ~= nil and g_localPlayer.rootNode ~= 0 then
             local x, y, z = getWorldTranslation(g_localPlayer.rootNode)
