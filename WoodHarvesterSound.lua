@@ -458,6 +458,13 @@ function WoodHarvesterSound:update(dt)
 		whs.cachedEntries = buildLogEntries(whs.logs)
 		whs.cachedBVH = #whs.cachedEntries > 1 and buildBVHNode(whs.cachedEntries) or nil
 		whs.bvhDirty = false
+	else
+		for _, entry in ipairs(whs.cachedEntries) do
+			if entry.v ~= nil and entityExists(entry.v) then
+				local lvx, lvy, lvz = getLinearVelocity(entry.v)
+				entry.lvx, entry.lvy, entry.lvz = lvx, lvy, lvz
+			end
+		end
 	end
 	
 	if whs.cachedBVH ~= nil then
