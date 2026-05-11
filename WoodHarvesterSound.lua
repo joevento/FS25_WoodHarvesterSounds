@@ -495,6 +495,15 @@ function WoodHarvesterSound:update(dt)
 				end
 			end
 			
+			if vehicle ~= nil and vehicle.spec_woodHarvester then
+				local spec = vehicle.spec_woodHarvester
+				if spec.attachedSplitShape ~= nil and spec.attachedSplitShape ~= 0 then
+					if ea.v == spec.attachedSplitShape or eb.v == spec.attachedSplitShape then
+						skip = true
+					end
+				end
+			end
+			
 			if isTensionBeltMounted(ea.id) and isTensionBeltMounted(eb.id) then
 				skip = true
 			end
