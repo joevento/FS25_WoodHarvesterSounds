@@ -515,7 +515,7 @@ function WoodHarvesterSound:update(dt)
 					local relVel = MathUtil.vector3Length(ea.lvx - eb.lvx, ea.lvy - eb.lvy, ea.lvz - eb.lvz)
 					
 					if relVel > 0.5 then
-						local combinedRadius = ea.radius + eb.radius
+						local combinedRadius = (ea.radius + eb.radius) * 0.975
 						
 						local dist = closestDistBetweenSegments(
 							{ ea.sx, ea.sy, ea.sz }, { ea.ex, ea.ey, ea.ez }, { eb.sx, eb.sy, eb.sz },
