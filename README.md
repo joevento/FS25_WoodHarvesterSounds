@@ -1,5 +1,5 @@
 # Wood Harvester Sound Mod
-<i>Current version 0.4.1.2</i>
+<i>Current version 0.5.0.0</i>
 
 Does a tree make a sound if no one is around to hear it? With this mod, it certainly does! 
 Unique sounds are now triggered based on physical log interactions, bringing forestry work to life.

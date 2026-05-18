@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <modDesc descVersion="105">
 	<author>DicoFlower8890</author>
-	<version>0.4.1.2</version>
+	<version>0.5.0.0</version>
 	<title>
 		<en>Wood Harvester Sounds</en>
 	</title>
@@ -27,5 +27,6 @@ Issues & suggestions: https://github.com/joevento/FS25_WoodHarvesterSounds]]></e
 	<multiplayer supported="true" />
 	<extraSourceFiles>
 		<sourceFile filename="WoodHarvesterSound.lua" />
+		<sourceFile filename="WoodHarvesterSoundEvent.lua" />
 	</extraSourceFiles>
 </modDesc>
