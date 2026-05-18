@@ -464,8 +464,12 @@ function WoodHarvesterSound:update(dt)
 				local lvx, lvy, lvz = getLinearVelocity(entry.v)
 				local comX, comY, comZ = getCenterOfMass(entry.v)
 				local wcx, wcy, wcz = localToWorld(entry.v, comX, comY, comZ)
+				local dx, dy, dz = localDirectionToWorld(entry.v, 0, 1, 0)
+				local hl = entry.halfLen
 				entry.lvx, entry.lvy, entry.lvz = lvx, lvy, lvz
 				entry.cx, entry.cy, entry.cz = wcx, wcy, wcz
+				entry.sx, entry.sy, entry.sz = wcx - dx * hl, wcy - dy * hl, wcz - dz * hl
+				entry.ex, entry.ey, entry.ez = wcx + dx * hl, wcy + dy * hl, wcz + dz * hl
 			end
 		end
 	end
