@@ -462,7 +462,10 @@ function WoodHarvesterSound:update(dt)
 		for _, entry in ipairs(whs.cachedEntries) do
 			if entry.v ~= nil and entityExists(entry.v) then
 				local lvx, lvy, lvz = getLinearVelocity(entry.v)
+				local comX, comY, comZ = getCenterOfMass(entry.v)
+				local wcx, wcy, wcz = localToWorld(entry.v, comX, comY, comZ)
 				entry.lvx, entry.lvy, entry.lvz = lvx, lvy, lvz
+				entry.cx, entry.cy, entry.cz = wcx, wcy, wcz
 			end
 		end
 	end
