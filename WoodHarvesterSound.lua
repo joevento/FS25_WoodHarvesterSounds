@@ -9,6 +9,16 @@ local _pairPool = {}
 local _pairCount = 0
 local _tensionBeltCache = {}
 
+local SOUND_TYPE_LOGS = 1
+local SOUND_TYPE_GROUND = 2
+local SOUND_TYPE_FALL = 3
+
+local function broadcastSound(soundType, x, y, z, sampleIndex)
+	if g_server then
+		g_server:broadcastEvent(WoodHarvesterSoundEvent.new(soundType, x, y, z, sampleIndex or 0))
+	end
+end
+
 function WoodHarvesterSound:loadMap(filename)
 	whs.logs = {}
 	whs.lastAngVel = {}
@@ -21,9 +31,7 @@ function WoodHarvesterSound:loadMap(filename)
 	whs.cachedEntries = {}
 	whs.cachedBVH = nil
 	whs.entryCache = {}
-	whs.playerX = 0
-	whs.playerY = 0
-	whs.playerZ = 0
+	whs.players = {}
 	whs.logPairs = {}
 	
 	local xmlPath = Utils.getFilename("Sounds/woodHarvesterSounds.xml", modDir)
@@ -126,31 +134,38 @@ local function playSound(samples, x, y, z, override)
 	return sample
 end
 
-local function getPlayerPos()
+local function getAllPlayerPositions()
+	local positions = {}
+	
 	if g_localPlayer ~= nil then
 		local vehicle = g_localPlayer:getCurrentVehicle()
 		if vehicle ~= nil and vehicle.rootNode ~= nil and vehicle.rootNode ~= 0 then
 			local x, y, z = getWorldTranslation(vehicle.rootNode)
-			return x, y, z, vehicle
-		end
-		if g_localPlayer.rootNode ~= nil and g_localPlayer.rootNode ~= 0 then
+			positions[1] = { x = x, y = y, z = z }
+		elseif g_localPlayer.rootNode ~= nil and g_localPlayer.rootNode ~= 0 then
 			local x, y, z = getWorldTranslation(g_localPlayer.rootNode)
 			if y > -100 then
-				return x, y, z, nil
+				positions[1] = { x = x, y = y, z = z }
 			end
 		end
 	end
-	return nil, nil, nil, nil
-end
-
-local function checkIsInRange(node)
-	if whs.playerX ~= nil and node ~= nil and entityExists(node) then
-		local x2, y2, z2 = getWorldTranslation(node)
-		local dist = MathUtil.vector3Length(whs.playerX - x2, whs.playerY - y2, whs.playerZ - z2)
-		return dist < whs.searchRadius
+	
+	if g_server and g_currentMission ~= nil and g_currentMission.players ~= nil then
+		for _, player in pairs(g_currentMission.players) do
+			local vehicle = player:getCurrentVehicle()
+			if vehicle ~= nil and vehicle.rootNode ~= nil and vehicle.rootNode ~= 0 then
+				local x, y, z = getWorldTranslation(vehicle.rootNode)
+				positions[#positions + 1] = { x = x, y = y, z = z }
+			elseif player.rootNode ~= nil and player.rootNode ~= 0 then
+				local x, y, z = getWorldTranslation(player.rootNode)
+				if y > -100 then
+					positions[#positions + 1] = { x = x, y = y, z = z }
+				end
+			end
+		end
 	end
 	
-	return false
+	return positions
 end
 
 local function buildLogEntries(logs)
@@ -366,18 +381,36 @@ function WoodHarvesterSound:update(dt)
 	end
 	whs.timer = 0
 	
-	local vehicle
-	whs.playerX, whs.playerY, whs.playerZ, vehicle = getPlayerPos()
-	if whs.playerX == nil then
+	-- get all vehicles
+	local activeVehicles = {}
+	if g_localPlayer ~= nil then
+		local v = g_localPlayer:getCurrentVehicle()
+		if v ~= nil then
+			activeVehicles[#activeVehicles + 1] = v
+		end
+	end
+	if g_server and g_currentMission ~= nil and g_currentMission.players ~= nil then
+		for _, player in pairs(g_currentMission.players) do
+			local v = player:getCurrentVehicle()
+			if v ~= nil then
+				activeVehicles[#activeVehicles + 1] = v
+			end
+		end
+	end
+	
+	whs.players = getAllPlayerPositions()
+	
+	if #whs.players == 0 then
 		return
 	end
 	
 	whs.currentScanFound = {}
 	
-	overlapSphere(
-		whs.playerX, whs.playerY, whs.playerZ, whs.searchRadius, "collisionTestCallback", self, 17041408, true, false,
-		true, false
-	)
+	for _, pos in ipairs(whs.players) do
+		overlapSphere(
+			pos.x, pos.y, pos.z, whs.searchRadius, "collisionTestCallback", self, 17041408, true, false, true, false
+		)
+	end
 	
 	if next(whs.currentScanFound) ~= nil then
 		for logId in pairs(whs.logs) do
@@ -415,31 +448,32 @@ function WoodHarvesterSound:update(dt)
 					
 					-- Ground Impact
 					if (comDistToGround < 0.5 and -vy > 0.5) then
-						if checkIsInRange(v) then
-							whs.playingSound[v] = playSound(whs.samplesGround, wcomX, wcomY, wcomZ)
-						end
+						whs.playingSound[v] = playSound(whs.samplesGround, wcomX, wcomY, wcomZ)
+						broadcastSound(SOUND_TYPE_GROUND, wcomX, wcomY, wcomZ, 0)
 					end
 					
 					-- Tree Falling
-					if vehicle ~= nil and vehicle.spec_woodHarvester then
-						if not isHorizontal(v) and vehicle.spec_woodHarvester.hasAttachedSplitShape then
-							local selectedIndex = nil
-							local sizeX, _, _ = getSplitShapeStats(v)
-							if sizeX < 12 then
-								selectedIndex = 1
-							end
-							if selectedIndex == nil then
-								selectedIndex = math.random(1, #whs.samplesFall)
-							end
-							
-							local threshold = (selectedIndex == 1) and 1 or 25
-							local ttg = timeToGround(
-								{ wcomX, wcomY, wcomZ }, { x, y, z }, { rotX, rotY, rotZ }, terrainY
-							)
-							
-							if ttg < threshold then
-								if checkIsInRange(v) then
+					for _, vehicle in ipairs(activeVehicles) do
+						if vehicle.spec_woodHarvester then
+							if not isHorizontal(v) and vehicle.spec_woodHarvester.hasAttachedSplitShape then
+								local selectedIndex = nil
+								local sizeX, _, _ = getSplitShapeStats(v)
+								if sizeX < 12 then
+									selectedIndex = 1
+								end
+								if selectedIndex == nil then
+									selectedIndex = math.random(1, #whs.samplesFall)
+								end
+								
+								local threshold = (selectedIndex == 1) and 1 or 25
+								local ttg = timeToGround(
+									{ wcomX, wcomY, wcomZ }, { x, y, z }, { rotX, rotY, rotZ }, terrainY
+								)
+								
+								if ttg < threshold then
 									whs.playingSound[v] = playSound(whs.samplesFall, wcomX, wcomY, wcomZ, selectedIndex)
+									broadcastSound(SOUND_TYPE_FALL, wcomX, wcomY, wcomZ, selectedIndex)
+									break
 								end
 							end
 						end
@@ -487,24 +521,28 @@ function WoodHarvesterSound:update(dt)
 			local ea = pair[1]
 			local eb = pair[2]
 			
-			if vehicle ~= nil and vehicle.spec_logGrab then
-				local spec = vehicle.spec_logGrab
-				for _, grab in ipairs(spec.grabs) do
-					for shapeId, _ in pairs(grab.dynamicMountedShapes) do
-						if shapeId == ea.v or shapeId == eb.v then
+			for _, vehicle in ipairs(activeVehicles) do
+				if vehicle.spec_logGrab then
+					local spec = vehicle.spec_logGrab
+					for _, grab in ipairs(spec.grabs) do
+						for shapeId, _ in pairs(grab.dynamicMountedShapes) do
+							if shapeId == ea.v or shapeId == eb.v then
+								skip = true
+							end
+						end
+					end
+				end
+				
+				if vehicle.spec_woodHarvester then
+					local spec = vehicle.spec_woodHarvester
+					if spec.attachedSplitShape ~= nil and spec.attachedSplitShape ~= 0 then
+						if ea.v == spec.attachedSplitShape or eb.v == spec.attachedSplitShape then
 							skip = true
 						end
 					end
 				end
-			end
-			
-			if vehicle ~= nil and vehicle.spec_woodHarvester then
-				local spec = vehicle.spec_woodHarvester
-				if spec.attachedSplitShape ~= nil and spec.attachedSplitShape ~= 0 then
-					if ea.v == spec.attachedSplitShape or eb.v == spec.attachedSplitShape then
-						skip = true
-					end
-				end
+				
+				if skip then break end
 			end
 			
 			if isTensionBeltMounted(ea.id) and isTensionBeltMounted(eb.id) then
@@ -526,9 +564,8 @@ function WoodHarvesterSound:update(dt)
 						)
 						
 						if dist < combinedRadius then
-							if checkIsInRange(v) and not whs.isLogsPlaying then
-								whs.playingSound[v] = playSound(whs.samplesLogs, ea.cx, ea.cy, ea.cz)
-							end
+							whs.playingSound[v] = playSound(whs.samplesLogs, ea.cx, ea.cy, ea.cz)
+							broadcastSound(SOUND_TYPE_LOGS, ea.cx, ea.cy, ea.cz, 0)
 						end
 					end
 				end
