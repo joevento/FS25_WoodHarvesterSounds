@@ -36,16 +36,12 @@ function WoodHarvesterSoundEvent:readStream(streamId, connection)
 	self.y = streamReadFloat32(streamId)
 	self.z = streamReadFloat32(streamId)
 	self.sampleIndex = streamReadUInt8(streamId)
+
+	self:run(connection)
 end
 
 function WoodHarvesterSoundEvent:run(connection)
-	if not g_server then
-		WoodHarvesterSound.playNetworkSound(
-			self.soundType,
-			self.x,
-			self.y,
-			self.z,
-			self.sampleIndex
-		)
+	if not g_server and WoodHarvesterSound ~= nil and WoodHarvesterSound.playNetworkSound ~= nil then
+		WoodHarvesterSound.playNetworkSound(self.soundType, self.x, self.y, self.z, self.sampleIndex)
 	end
 end
