@@ -40,14 +40,12 @@ end
 
 function WoodHarvesterSoundEvent:run(connection)
 	if not g_server then
-		local samples
-		if self.soundType == SOUND_TYPE_LOGS then
-			samples = whs.samplesLogs
-		elseif self.soundType == SOUND_TYPE_GROUND then
-			samples = whs.samplesGround
-		elseif self.soundType == SOUND_TYPE_FALL then
-			samples = whs.samplesFall
-		end
-		playSound(samples, self.x, self.y, self.z, self.sampleIndex ~= 0 and self.sampleIndex or nil)
+		WoodHarvesterSound.playNetworkSound(
+			self.soundType,
+			self.x,
+			self.y,
+			self.z,
+			self.sampleIndex
+		)
 	end
 end

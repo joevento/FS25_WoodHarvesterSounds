@@ -134,6 +134,20 @@ local function playSound(samples, x, y, z, override)
 	return sample
 end
 
+function WoodHarvesterSound.playNetworkSound(soundType, x, y, z, sampleIndex)
+	local samples
+
+	if soundType == SOUND_TYPE_LOGS then
+		samples = whs.samplesLogs
+	elseif soundType == SOUND_TYPE_GROUND then
+		samples = whs.samplesGround
+	elseif soundType == SOUND_TYPE_FALL then
+		samples = whs.samplesFall
+	end
+
+	playSound(samples, x, y, z, sampleIndex ~= 0 and sampleIndex or nil)
+end
+
 local function getAllPlayerPositions()
 	local positions = {}
 	
