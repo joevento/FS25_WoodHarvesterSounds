@@ -1,20 +1,17 @@
 # Wood Harvester Sound Mod
-<i>Current version 0.5.0.3</i>
+<i>Current version 1.0.0.0</i>
 
-Does a tree make a sound if no one is around to hear it? With this mod, it certainly does! 
-Unique sounds are now triggered based on physical log interactions, bringing forestry work to life.
+Does a tree make a sound when nobody is around to hear it?
+With this mod, it definitely does!
 
-Three sound events are covered: trees crashing down as they fall, 
-logs colliding against each other, and the thud of logs hitting 
-the ground.
+Bring your forestry adventures to life with sound:
+When trees fall or collide with each other, fitting and realistic sounds are now played.
 
-Sound Variety:
-- 6 Tree falling variations
-- 5 Log-on-log collision variations
-- 4 Log ground impact variations
+This mod includes sounds for the following events:
 
-Originally designed for harvesters hence the name, but reimagined half way through to work globally in any machine.
-Even with heavy optimisation the mod can still cause small performance issues when there are hundreds of logs around.
+6 variations for falling trees
+5 variations for collisions between tree trunks
+4 variations for impacts on the ground
 
 ### Use following page to post bug reports: 
 https://github.com/joevento/FS25_WoodHarvesterSounds/issues

@@ -1,27 +1,41 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
-<modDesc descVersion="105">
-	<author>DicoFlower8890</author>
-	<version>0.5.0.3</version>
+<modDesc descVersion="110">
+	<author>DiscoFlower8890</author>
+	<version>1.0.0.0</version>
 	<title>
 		<en>Wood Harvester Sounds</en>
+		<de>Holzvollernter-Sounds</de>
 	</title>
 	<description>
-		<en><![CDATA[Does a tree make a sound if no one is around to hear it? With this mod, it certainly does! 
-Unique sounds are now triggered based on physical log interactions, bringing forestry work to life.
+		<en><![CDATA[Does a tree make a sound when nobody is around to hear it?
+With this mod, it definitely does!
 
-Three sound events are covered: trees crashing down as they fall, 
-logs colliding against each other, and the thud of logs hitting 
-the ground.
+Bring your forestry adventures to life with sound:
+When trees fall or collide with each other, fitting and realistic sounds are now played.
 
-Sound Variety:
-- 6 Tree falling variations
-- 5 Log-on-log collision variations
-- 4 Log ground impact variations
+This mod includes sounds for the following events:
 
-Originally designed for harvesters hence the name, but reimagined half way through to work globally in any machine.
-Even with heavy optimisation the mod can still cause small performance issues when there are hundreds of logs around.
+- 6 variations for falling trees
+- 5 variations for collisions between tree trunks
+- 4 variations for impacts on the ground
+
 
 Issues & suggestions: https://github.com/joevento/FS25_WoodHarvesterSounds]]></en>
+		<de><![CDATA[Macht ein Baum Geräusche, wenn niemand da ist, um sie zu hören? 
+Mit dieser Mod auf jeden Fall!
+
+Erwecke deine Forstabenteuer jetzt auch hörbar zum leben:
+Wenn Bäume fallen oder miteinander kollidieren, werden nun passende, realistische Sounds abgespielt. 
+
+Diese Mod bietet Geräusche für folgende Ereignisse:
+
+- 6 Variationen für fallende Bäume
+- 5 Variationen für Kollisionen zwischen Baumstämmen
+- 4 Variationen für Aufpralle auf dem Boden
+
+
+Probleme & Vorschläge: [https://github.com/joevento/FS25_WoodHarvesterSounds](https://github.com/joevento/FS25_WoodHarvesterSounds)
+]]></de>
 	</description>
 	<iconFilename>icon_WHS.dds</iconFilename>
 	<multiplayer supported="true" />
